@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Next Line",
+    "slug": "nextline",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#10140F",
+    "scheme": "nextline",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.nextline.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.nextline.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#10140F"
+      }
+    },
+    "plugins": [
+      "expo-font",
+      "expo-status-bar",
+      "expo-sharing",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#10140F"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Next Line records your ride's route while your phone is in your pocket, so it keeps using GPS when the screen is off.",
+          "locationWhenInUsePermission": "Next Line uses GPS to record your ride's route, speed and descents.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Next Line uses motion sensors to detect jumps, airtime and crashes while you ride."
+        }
+      ]
+    ]
+  }
+}

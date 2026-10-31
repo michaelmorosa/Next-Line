@@ -1,0 +1,22 @@
+# Python virtual environment
+env/
+venv/
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Env variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local databases and collected static files
+*.sqlite3
+backend/nextline/static/
+
+# Node / Expo
+node_modules/
+.expo/
+dist/
