@@ -9,14 +9,14 @@
     "scheme": "nextline",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.nextline.app",
+      "bundleIdentifier": "app.nextline.mtb",
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.nextline.app",
+      "package": "app.nextline.mtb",
       "adaptiveIcon": {
         "backgroundColor": "#10140F"
       }
@@ -47,6 +47,11 @@
           "motionPermission": "Next Line uses motion sensors to detect jumps, airtime and crashes while you ride."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "174d3ba9-4a99-4350-a16e-a427a70afdb6"
+      }
+    }
   }
 }
