@@ -9,7 +9,7 @@ from pathlib import Path
 
 CONTENT_DIR = Path(__file__).resolve().parent / 'content'
 
-TIERS = (1, 2, 3, 4)
+TIERS = (1, 2, 3, 4, 5, 6)
 REQUIRED_SKILL_FIELDS = (
     'id', 'name', 'branch', 'tier', 'prerequisites', 'description', 'why', 'drills', 'mastery_test', 'media', 'tags',
 )
@@ -114,7 +114,28 @@ def validate_skills(data):
     cycle = find_cycle({s: [p for p in by_id[s].get('prerequisites') or [] if p != s] for s in by_id})
     if cycle:
         errors.append('prerequisite cycle: ' + ' → '.join(cycle))
+    elif not errors:
+        errors += validate_capstone(by_id)
     return errors, warnings
+
+
+def validate_capstone(by_id):
+    """The capstone (at most one) has to need every other skill, directly or not, so mastering it means the whole
+    tree is done."""
+    capstones = [s for s in by_id if by_id[s].get('capstone')]
+    if len(capstones) > 1:
+        return ['only one skill can be the capstone: ' + ', '.join(capstones)]
+    if not capstones:
+        return []
+    below = set()
+    todo = list(by_id[capstones[0]]['prerequisites'])
+    while todo:
+        skill = todo.pop()
+        if skill not in below:
+            below.add(skill)
+            todo += by_id[skill]['prerequisites']
+    missing = sorted(set(by_id) - below - {capstones[0]})
+    return [f"{capstones[0]}: the capstone doesn't need {', '.join(missing)}"] if missing else []
 
 
 def validate_rules(rules):
@@ -140,6 +161,8 @@ def validate_rules(rules):
         errors.append('rules.json: levels.growth must be 1 or more')
     if not (isinstance(levels.get('count'), int) and levels['count'] >= 2):
         errors.append('rules.json: levels.count must be 2 or more')
+    if not rules.get('master_title'):
+        errors.append('rules.json: master_title is missing')
     titles = rules.get('titles') or []
     starts = [t.get('from_level') for t in titles]
     if not titles or starts[0] != 1:
@@ -207,6 +230,11 @@ def skill_tree():
 
 def rules():
     return _load()[1]
+
+
+def capstone_id():
+    """The skill that means the whole tree is mastered, or None."""
+    return next((s['id'] for s in skill_tree()['skills'] if s.get('capstone')), None)
 
 
 def skills_by_id():

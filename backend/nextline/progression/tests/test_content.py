@@ -56,6 +56,16 @@ class SkillValidationTests(SimpleTestCase):
         errors, _ = validate_skills(tree(skill('a', ['b']), skill('b', ['a'])))
         self.assertTrue(any(e.startswith('prerequisite cycle: ') for e in errors))
 
+    def test_capstone_must_need_every_skill(self):
+        errors, _ = validate_skills(tree(skill('a'), skill('b', ['a']), skill('c'), skill('top', ['b'], capstone=True)))
+        self.assertIn("top: the capstone doesn't need c", errors)
+        errors, _ = validate_skills(tree(skill('a'), skill('b', ['a']), skill('top', ['b'], capstone=True)))
+        self.assertEqual(errors, [])
+
+    def test_one_capstone_at_most(self):
+        errors, _ = validate_skills(tree(skill('a', capstone=True), skill('b', capstone=True)))
+        self.assertIn('only one skill can be the capstone: a, b', errors)
+
     def test_self_prerequisite(self):
         errors, _ = validate_skills(tree(skill('a', ['a'])))
         self.assertIn('a: requires itself', errors)
@@ -135,9 +145,11 @@ class RealContentTests(SimpleTestCase):
     def test_seed_tree(self):
         skills = content.read('skills.json')['skills']
         by_id = {s['id']: s for s in skills}
-        self.assertEqual(len(skills), 19)
-        self.assertEqual({s['tier'] for s in skills}, {1, 2, 3, 4})
-        self.assertEqual(len({s['branch'] for s in skills}), 6)
+        self.assertEqual(len(skills), 50)
+        self.assertEqual({s['tier'] for s in skills}, {1, 2, 3, 4, 5, 6})
+        self.assertEqual(len({s['branch'] for s in skills}), 9)
+        self.assertEqual(max(depths(skills).values()), 7)
+        self.assertEqual([s['id'] for s in skills if s.get('capstone')], ['mtb_master'])
         self.assertEqual(sorted(by_id['small_drops']['prerequisites']), ['manual', 'roll_offs'])
         self.assertTrue(all(s['draft'] for s in skills))
         roots = {s['id'] for s in skills if not s['prerequisites']}

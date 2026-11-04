@@ -70,6 +70,8 @@ test('captions', () => {
   assert.equal(nodeCaption({ state: 'in_progress', sessions: 1 }), '1 session');
   assert.equal(nodeCaption({ state: 'in_progress', sessions: 4, eligible: true }), 'Ready to test');
   assert.equal(nodeCaption({ state: 'ready', tier: 2 }), 'Tier 2 · ready');
+  assert.equal(nodeCaption({ state: 'locked', tier: 6, capstone: true }), 'Master every branch');
+  assert.equal(nodeCaption({ state: 'mastered', capstone: true }), 'You conquered the tree');
 });
 
 test('scroll target centres a node and never goes negative', () => {

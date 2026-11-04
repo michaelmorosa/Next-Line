@@ -28,7 +28,7 @@ NEARBY_FEATURES = 5
 NEARBY_MAX_M = 50_000
 HISTORY_SESSIONS = 50
 XP_PAGE = 50
-SUMMARY_FIELDS = ('id', 'name', 'branch', 'tier', 'prerequisites', 'description', 'tags', 'draft')
+SUMMARY_FIELDS = ('id', 'name', 'branch', 'tier', 'prerequisites', 'description', 'tags', 'draft', 'capstone')
 
 
 def error(exc):

@@ -105,6 +105,11 @@ export default function LevelGuideScreen() {
             </View>
           );
         })}
+        {rules.master_title && (
+          <Text style={ui.small}>
+            Master every skill in the tree, ending with the final skill, to earn the {rules.master_title} title at any level.
+          </Text>
+        )}
       </View>
 
       <View style={ui.card}>

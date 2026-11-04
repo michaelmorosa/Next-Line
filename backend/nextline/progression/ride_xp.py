@@ -97,8 +97,9 @@ def ride_xp(ride):
     ).values_list('feature_id', flat=True)
     entries += XPEntry.objects.filter(user=ride.user, source__in=[f'feature:{f}' for f in first_cleaned])
     gained = sum(e.amount for e in entries)
-    before = xp.level_for(xp.total_xp(ride.user, until=ride.started_at - timedelta(microseconds=1)))
-    after = xp.level_for(before['total'] + gained)
+    master = xp.is_master(ride.user)
+    before = xp.level_for(xp.total_xp(ride.user, until=ride.started_at - timedelta(microseconds=1)), master=master)
+    after = xp.level_for(before['total'] + gained, master=master)
     by_reason = {}
     for e in entries:
         by_reason[e.get_reason_display()] = by_reason.get(e.get_reason_display(), 0) + e.amount

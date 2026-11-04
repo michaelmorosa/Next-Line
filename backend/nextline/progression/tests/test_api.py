@@ -45,7 +45,7 @@ class SkillTreeApiTests(ApiTestCase):
         self.assertEqual(res.status_code, 200)
         states = {s['id']: s['state'] for s in res.data['skills']}
         self.assertEqual({k for k, v in states.items() if v == 'ready'}, set(FOUNDATIONS))
-        self.assertEqual(list(states.values()).count('locked'), 16)
+        self.assertEqual(list(states.values()).count('locked'), 47)
         self.assertEqual(set(res.data['next_up']), set(FOUNDATIONS))
         self.assertEqual(res.data['level']['level'], 1)
         self.assertEqual(res.data['level']['title'], 'PQ Punk')
@@ -155,7 +155,7 @@ class MasteryApiTests(ApiTestCase):
         self.assertEqual(res.status_code, 201)
         self.assertEqual(res.data['xp_gained'], 100)
         self.assertEqual(res.data['skill']['state'], 'mastered')
-        self.assertEqual({u['id'] for u in res.data['unlocked']}, {'wheel_lift', 'pumping'})
+        self.assertEqual({u['id'] for u in res.data['unlocked']}, {'climbing_position', 'wheel_lift', 'pumping'})
         self.assertEqual((res.data['level_before']['level'], res.data['level']['level']), (1, 2))
         self.assertTrue(res.data['leveled_up'])
 

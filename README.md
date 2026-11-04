@@ -101,8 +101,11 @@ skill takes. Rider level comes from total XP. The code is in `backend/nextline/p
 
 ### Skills
 
-- There are 19 skills in 6 branches (Foundations, Cornering, Wheel lifts, Air, Drops, Technical), across tiers
-  1–4.
+- There are 50 skills in 9 branches (Foundations, Climbing, Cornering, Wheel lifts, Air, Drops, Technical, Speed
+  and lines, Mastery), across tiers 1–6. The longest chain is 8 skills, from Attack position to MTB Master.
+- **MTB Master** is the final skill (`"capstone": true`). It needs the last skill of every branch, so a rider can
+  only master it once they've mastered the whole tree. The validator checks this whenever the tree changes. Riders
+  who master it get the `master_title` from `rules.json` ("MTB Master") in place of their level title.
 - Each skill has:
   - a description and why it matters
   - 2–3 drills
@@ -161,7 +164,8 @@ nothing stores a total.
   is worth 300.
 - **Trail difficulty weights** are green and unrated ×1, blue ×2, black ×4, double black ×6. A rider's own rating
   of their auto trail counts as blue at most.
-- **Levels:** level 2 needs 100 XP, and each level after that needs 20% more than the one before (20 levels).
+- **Levels:** level 2 needs 100 XP, and each level after that needs 22% more than the one before (20 levels).
+  Level 20 (about 19,400 XP) is roughly what mastering the whole tree earns.
   Titles cover two levels each: PQ Punk, Gravel Grom, Berm Burner, Root Rattler, Flow Fiend, Drop Dog, Gap Goblin,
   Sedona Shredder, Whistler Whipper, Line Legend.
 - **Practice streak:** consecutive weeks with practice on 3 or more days. Days are the rider's local date, sent by

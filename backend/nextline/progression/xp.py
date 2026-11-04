@@ -6,7 +6,7 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from . import content
-from .models import Attempt, PracticeSession, Reason, XPEntry
+from .models import Attempt, Mastery, PracticeSession, Reason, XPEntry
 
 
 def award(user, reason, source, amount, *, skill_id='', challenge=None, at=None):
@@ -52,8 +52,9 @@ def title_for(level, rules=None):
     return title
 
 
-def level_for(total, rules=None):
-    """Level, title and the progress bar for a total."""
+def level_for(total, rules=None, master=False):
+    """Level, title and the progress bar for a total. A rider who has mastered the capstone skill (the whole tree)
+    gets the master title whatever their level."""
     rules = rules or content.rules()
     table = thresholds(rules)
     level = max(i + 1 for i, need in enumerate(table) if total >= need) if total >= 0 else 1
@@ -62,7 +63,8 @@ def level_for(total, rules=None):
     next_at = None if top else table[level]
     return {
         'level': level,
-        'title': title_for(level, rules),
+        'title': rules['master_title'] if master else title_for(level, rules),
+        'master': master,
         'total': total,
         'level_floor': floor,
         'next_at': next_at,
@@ -74,8 +76,13 @@ def level_for(total, rules=None):
     }
 
 
+def is_master(user):
+    capstone = content.capstone_id()
+    return bool(capstone) and Mastery.objects.filter(user=user, skill_id=capstone).exists()
+
+
 def level(user):
-    return level_for(total_xp(user))
+    return level_for(total_xp(user), master=is_master(user))
 
 
 # Practice days and streaks.

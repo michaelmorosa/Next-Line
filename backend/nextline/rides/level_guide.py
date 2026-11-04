@@ -87,13 +87,14 @@ def level_rules():
         'version': rules['version'],
         'levels': [{'level': i + 1, 'xp': need, 'title': xp.title_for(i + 1, rules)} for i, need in enumerate(table)],
         'titles': rules['titles'],
+        'master_title': rules['master_title'],
         'sources': [
             {'key': Reason.SESSION, 'label': 'Drill sessions',
              'how': f"{v['drill_session']} XP each, up to {caps['drill_sessions_per_skill_per_day']} per skill a day."},
             {'key': Reason.ATTEMPT, 'label': 'Attempt videos',
              'how': f"{v['attempt_video']} XP each, up to {caps['attempt_videos_per_skill_per_day']} per skill a day."},
             {'key': Reason.MASTERY, 'label': 'Skills mastered',
-             'how': f"{v['mastery_per_tier']} XP times the skill's tier (1–4). Needs {m['min_sessions']} sessions on "
+             'how': f"{v['mastery_per_tier']} XP times the skill's tier (1–{max(content.TIERS)}). Needs {m['min_sessions']} sessions on "
                     f"at least {m['min_practice_days']} days and {m['min_videos']} attempt video, then you confirm "
                     "you passed the mastery test."},
             {'key': Reason.STREAK, 'label': 'Practice weeks',

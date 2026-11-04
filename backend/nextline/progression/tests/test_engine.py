@@ -62,13 +62,15 @@ class LevelTests(SimpleTestCase):
         self.assertEqual(xp.level_for(230, self.rules)['title'], 'Gravel Grom')
 
     def test_top_level(self):
+        lv = xp.level_for(160, {**self.rules, 'master_title': 'MTB Master'}, master=True)
+        self.assertEqual((lv['level'], lv['title'], lv['master']), (2, 'MTB Master', True))
         lv = xp.level_for(10_000, self.rules)
         self.assertEqual((lv['level'], lv['to_next'], lv['fraction'], lv['next_at']), (5, None, 1.0, None))
 
     def test_real_rules(self):
         table = xp.thresholds()
         self.assertEqual(len(table), 20)
-        self.assertEqual(table[:3], [0, 100, 220])
+        self.assertEqual(table[:3], [0, 100, 222])
         self.assertEqual(xp.title_for(1), 'PQ Punk')
         self.assertEqual(xp.title_for(20), 'Line Legend')
 
@@ -126,7 +128,7 @@ class PracticeTests(TempMediaMixin, TestCase):
     def test_new_rider_has_foundations_ready_and_rest_locked(self):
         states = rider_skills(self.user)
         self.assertEqual({s for s, v in states.items() if v['state'] == READY}, set(FOUNDATIONS))
-        self.assertEqual(sum(v['state'] == LOCKED for v in states.values()), 16)
+        self.assertEqual(sum(v['state'] == LOCKED for v in states.values()), 47)
 
     def test_session_earns_xp_and_starts_skill(self):
         result = practise(self.user, 'attack_position')
@@ -221,7 +223,7 @@ class MasteryTests(TempMediaMixin, TestCase):
         unlocked = {}
         for skill in ('attack_position', 'braking_control', 'looking_ahead', 'roll_offs', 'wheel_lift', 'pumping'):
             unlocked[skill] = master(self.user, skill)['unlocked']
-        self.assertEqual(unlocked['attack_position'], ['wheel_lift', 'pumping'])
+        self.assertEqual(unlocked['attack_position'], ['climbing_position', 'wheel_lift', 'pumping'])
         self.assertIn('roll_offs', unlocked['braking_control'])
         self.assertIn('flat_corners', unlocked['looking_ahead'])
         self.assertNotIn('small_drops', unlocked['roll_offs'])  # Manual isn't mastered yet
@@ -236,6 +238,17 @@ class MasteryTests(TempMediaMixin, TestCase):
         self.assertEqual(result['level_before']['total'], 45)  # 3 sessions + 1 attempt
         self.assertEqual(result['level_after']['total'], 145)
         self.assertEqual(result['level_after']['level'], 2)
+
+    def test_mastering_the_capstone_makes_a_master(self):
+        capstone = content.capstone_id()
+        for skill_id in content.skills_by_id():
+            if skill_id != capstone:
+                Mastery.objects.create(user=self.user, skill_id=skill_id, confirmed_test=True)
+        self.assertFalse(xp.level(self.user)['master'])
+        result = master(self.user, capstone)
+        self.assertEqual(result['awards'][0].amount, 600)  # tier 6
+        self.assertEqual(result['level_after']['title'], content.rules()['master_title'])
+        self.assertTrue(xp.level(self.user)['master'])
 
     def test_coach_verified_is_optional(self):
         master(self.user, 'attack_position')

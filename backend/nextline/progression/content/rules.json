@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "xp": {
     "drill_session": 10,
     "attempt_video": 15,
@@ -31,9 +31,10 @@
   },
   "levels": {
     "first_step": 100,
-    "growth": 1.2,
+    "growth": 1.22,
     "count": 20
   },
+  "master_title": "MTB Master",
   "titles": [
     {"from_level": 1, "title": "PQ Punk"},
     {"from_level": 3, "title": "Gravel Grom"},

@@ -63,6 +63,8 @@ export function edgePath(from, to) {
 
 // What to show under a skill's name in the tree.
 export function nodeCaption(skill) {
+  if (skill.capstone && skill.state === 'mastered') return 'You conquered the tree';
+  if (skill.capstone && skill.state === 'locked') return 'Master every branch';
   if (skill.state === 'mastered') return skill.coach_verified ? 'Mastered · coach ✓' : 'Mastered';
   if (skill.state === 'in_progress') {
     return skill.eligible ? 'Ready to test' : `${skill.sessions} session${skill.sessions === 1 ? '' : 's'}`;
