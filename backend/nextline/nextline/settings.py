@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'users',
     'trails',
     'rides',
+    'progression',
 ]
 
 MIDDLEWARE = [

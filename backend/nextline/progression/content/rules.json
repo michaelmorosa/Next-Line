@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "xp": {
+    "drill_session": 10,
+    "attempt_video": 15,
+    "mastery_per_tier": 100,
+    "challenge_complete": 50,
+    "weekly_streak": 25,
+    "ride": 2,
+    "feature_cleaned_per_weight": 20,
+    "trail_pr": 10,
+    "biggest_air": 10,
+    "descent_per_100m": 1,
+    "jump": 1
+  },
+  "caps": {
+    "drill_sessions_per_skill_per_day": 3,
+    "attempt_videos_per_skill_per_day": 1,
+    "descent_xp_per_day": 15,
+    "jump_xp_per_day": 10
+  },
+  "mastery": {
+    "min_sessions": 3,
+    "min_practice_days": 2,
+    "min_videos": 1,
+    "requires_confirmation": true
+  },
+  "streak": {
+    "practice_days_per_week": 3
+  },
+  "levels": {
+    "first_step": 100,
+    "growth": 1.2,
+    "count": 20
+  },
+  "titles": [
+    {"from_level": 1, "title": "PQ Punk"},
+    {"from_level": 3, "title": "Gravel Grom"},
+    {"from_level": 5, "title": "Berm Burner"},
+    {"from_level": 7, "title": "Root Rattler"},
+    {"from_level": 9, "title": "Flow Fiend"},
+    {"from_level": 11, "title": "Drop Dog"},
+    {"from_level": 13, "title": "Gap Goblin"},
+    {"from_level": 15, "title": "Sedona Shredder"},
+    {"from_level": 17, "title": "Whistler Whipper"},
+    {"from_level": 19, "title": "Line Legend"}
+  ],
+  "attempts": {
+    "max_seconds": 60,
+    "max_mb": 100
+  }
+}

@@ -1,0 +1,355 @@
+{
+  "version": 1,
+  "branches": [
+    {"id": "foundations", "name": "Foundations", "color": "#7FD1C1"},
+    {"id": "cornering", "name": "Cornering", "color": "#6FA8DC"},
+    {"id": "wheel_lifts", "name": "Wheel lifts", "color": "#E6D36A"},
+    {"id": "air", "name": "Air", "color": "#F2994A"},
+    {"id": "drops", "name": "Drops", "color": "#E5636B"},
+    {"id": "technical", "name": "Technical", "color": "#B79CED"}
+  ],
+  "skills": [
+    {
+      "id": "attack_position",
+      "name": "Attack position",
+      "branch": "foundations",
+      "tier": 1,
+      "prerequisites": [],
+      "description": "The ready stance for anything rough or fast: pedals level, weight on your feet, knees and elbows bent and out, hips back, eyes up.",
+      "why": "Every other skill starts from here. Bent limbs soak up hits, and weight in your feet keeps the tires gripping instead of your hands taking the bike for a ride.",
+      "drills": [
+        {"name": "Parking-lot hover", "how": "Roll slowly on flat ground, stand in attack position and hold it for 20 seconds. Check: pedals level, heels down, elbows out, chin over the stem. Repeat 5 times."},
+        {"name": "Bump soak", "how": "Roll over a curb or small bump in attack position and let your arms and legs absorb it so your head stays level. Do 10 passes."},
+        {"name": "Trail switch", "how": "On an easy descent, call out each time you switch from seated to attack position before a rough section. Aim to be set up before every rough bit, not in it."}
+      ],
+      "mastery_test": "You've got it when you go into attack position without thinking before every rough or fast section of an easy trail, and your head stays level over small bumps.",
+      "media": [{"type": "video", "url": null, "caption": "Attack position from the side and front"}],
+      "tags": ["technical"],
+      "draft": true
+    },
+    {
+      "id": "braking_control",
+      "name": "Braking control",
+      "branch": "foundations",
+      "tier": 1,
+      "prerequisites": [],
+      "description": "Braking hard and early before a section, then letting off so the wheels roll through it. Mostly front brake, one finger, heels down.",
+      "why": "Controlled braking means you pick your speed before trouble instead of grabbing brakes in the middle of it, which is what washes out tires and starts most crashes.",
+      "drills": [
+        {"name": "Stop-line", "how": "Mark a line on a gentle slope. Ride at it at a steady speed and stop with your front wheel on it, using both brakes, without skidding. Do 10 stops, getting a little faster each time."},
+        {"name": "Brake, release, roll", "how": "Pick a corner or rough patch on an easy trail. Do all your braking before it, then let off completely and roll through. Repeat 5 runs."},
+        {"name": "One-finger feel", "how": "Ride a gentle descent using only one finger on each lever, adjusting speed smoothly with no skids. Notice how much the front brake can do."}
+      ],
+      "mastery_test": "You've got it when you can stop on a line without skidding from moderate speed, and on an easy trail you're off the brakes through every corner and rough patch.",
+      "media": [{"type": "video", "url": null, "caption": "Braking before a corner, rolling through it"}],
+      "tags": [],
+      "draft": true
+    },
+    {
+      "id": "looking_ahead",
+      "name": "Looking ahead",
+      "branch": "foundations",
+      "tier": 1,
+      "prerequisites": [],
+      "description": "Keeping your eyes 3 to 5 seconds down the trail, on where you want to go, not on the rock right in front of your wheel.",
+      "why": "The bike goes where you look. Looking ahead gives your brain time to plan, smooths out your speed and keeps you off the obstacles you're scared of.",
+      "drills": [
+        {"name": "Cone weave", "how": "Set 5 markers in a loose line on flat ground. Weave through them looking at the marker after next, never the one you're passing."},
+        {"name": "Call it", "how": "On an easy trail, say out loud the next feature you see coming (\"rock, left turn, roots\"). If you can't name it before you're on it, look further."},
+        {"name": "Exit spotting", "how": "In every corner of a run, turn your head to the exit before you turn the bars. Count how many corners you remembered."}
+      ],
+      "mastery_test": "You've got it when you can ride an easy trail you know while calling out features before you reach them, and you look through every corner to its exit.",
+      "media": [{"type": "video", "url": null, "caption": "Head-cam: where your eyes should be"}],
+      "tags": [],
+      "draft": true
+    },
+    {
+      "id": "flat_corners",
+      "name": "Flat corners",
+      "branch": "cornering",
+      "tier": 2,
+      "prerequisites": ["attack_position", "braking_control", "looking_ahead"],
+      "description": "Turning on flat or off-camber dirt: brake before, outside pedal down, weight into the outside foot and inside hand, lean the bike more than your body.",
+      "why": "Most trail corners have no berm. Getting grip on flat dirt is what lets you carry speed instead of skidding or stopping at every turn.",
+      "drills": [
+        {"name": "Figure eights", "how": "Ride figure eights around two markers on grass or dirt. Drop the outside pedal each turn and press the bike under you while your body stays upright. 5 minutes."},
+        {"name": "Hand-heavy turns", "how": "In a wide turn, push down on the inside grip and feel the front tire bite. Go a little faster each lap until the front starts to drift, then back off."},
+        {"name": "Slow-in, fast-out", "how": "On a trail corner, brake to a speed that feels too slow, then pedal out of the exit. Time 3 runs and try to make the exit faster each time."}
+      ],
+      "mastery_test": "You've got it when you can ride a figure eight with the bike leaning under you and no skids, and take the flat corners on a green trail without touching the brakes mid-turn.",
+      "media": [{"type": "video", "url": null, "caption": "Flat corner: bike lean vs body lean"}],
+      "tags": ["technical"],
+      "draft": true
+    },
+    {
+      "id": "berms",
+      "name": "Berms",
+      "branch": "cornering",
+      "tier": 3,
+      "prerequisites": ["flat_corners", "pumping"],
+      "description": "Riding banked turns: enter high, look to the exit, stay square to the berm's surface and push into it to come out faster than you went in.",
+      "why": "Berms hand you free speed if you work them, and cost you speed if you brake in them. They're also the base for flow trails and jump lines.",
+      "drills": [
+        {"name": "No-brake berm", "how": "Pick one berm. Ride it 5 times, braking before the entry and never inside. Note your exit speed."},
+        {"name": "Push the wall", "how": "As you enter, sink into the berm with legs and arms, then extend out of it on the exit like you're pushing the bike into the wall. 5 runs."},
+        {"name": "High line, low line", "how": "Ride the same berm entering high and entering low. Feel which keeps more speed for you."}
+      ],
+      "mastery_test": "You've got it when you can ride a berm without braking in it and come out at least as fast as you went in, every time on a run of 3 or more berms.",
+      "media": [{"type": "video", "url": null, "caption": "Pumping through a berm"}],
+      "tags": ["berm"],
+      "draft": true
+    },
+    {
+      "id": "switchbacks",
+      "name": "Switchbacks",
+      "branch": "cornering",
+      "tier": 3,
+      "prerequisites": ["flat_corners", "braking_control"],
+      "description": "Tight, steep hairpins: slow right down before, go wide on the entry, look all the way around, and turn late at the apex.",
+      "why": "Switchbacks are where riders dab and walk. Riding them clean saves energy on climbs and descents and is a big confidence step.",
+      "drills": [
+        {"name": "Tight circles", "how": "On flat ground, ride the tightest circle you can without a foot down, in both directions. Use a little rear brake and keep pedaling lightly."},
+        {"name": "Wide entry", "how": "On a switchback, ride the outside of the trail on the way in and only turn once you can see the exit. 5 tries."},
+        {"name": "Head first", "how": "Turn your head and shoulders all the way to the exit before the bike turns. Say \"look\" out loud as you do."}
+      ],
+      "mastery_test": "You've got it when you can ride 3 switchbacks in a row on a blue trail, up or down, with no foot down.",
+      "media": [{"type": "video", "url": null, "caption": "Wide-in, late-apex switchback"}],
+      "tags": ["technical"],
+      "draft": true
+    },
+    {
+      "id": "wheel_lift",
+      "name": "Wheel lift",
+      "branch": "wheel_lifts",
+      "tier": 2,
+      "prerequisites": ["attack_position"],
+      "description": "Lifting the front wheel by shifting your hips back and pushing the bars forward and up, not by yanking with your arms.",
+      "why": "Wheel lifts get the front over roots, rocks and edges instead of into them. They're the first step to manuals and bunny hops.",
+      "drills": [
+        {"name": "Hip throw", "how": "Rolling slowly, drop your chest, then push your hips back toward the rear axle with straight arms. The front should get light. 10 reps."},
+        {"name": "Line hop", "how": "Lift the front wheel over a line on the ground, then a stick, then a curb-height object. 10 of each."},
+        {"name": "Root practice", "how": "On a rooty section, lift the front over each root so only the back wheel hits it."}
+      ],
+      "mastery_test": "You've got it when you can lift the front wheel over a curb-height obstacle while rolling, 5 times out of 5, using your hips and not your arms.",
+      "media": [{"type": "video", "url": null, "caption": "Hips back, not arms in"}],
+      "tags": ["roots", "technical"],
+      "draft": true
+    },
+    {
+      "id": "manual",
+      "name": "Manual",
+      "branch": "wheel_lifts",
+      "tier": 3,
+      "prerequisites": ["wheel_lift", "pumping"],
+      "description": "Rolling on the back wheel without pedaling, balanced with your hips low and back and arms straight, controlling height with the rear brake and your knees.",
+      "why": "Manuals carry you over holes, take the edge off drops and let you pump through terrain. They're a key ingredient for small drops and jumps.",
+      "drills": [
+        {"name": "Find the balance point", "how": "On a gentle slope, lift the front and hold it up as long as you can with straight arms, covering the rear brake. Use the brake to bring it down if you go too far. 15 tries."},
+        {"name": "Distance markers", "how": "Mark 1, 2 and 4 bike lengths on flat ground. Count how far each manual goes and log your best."},
+        {"name": "Manual a dip", "how": "Find a small dip or puddle. Manual over it so the front never drops in."}
+      ],
+      "mastery_test": "You've got it when you can manual 3 bike lengths on flat ground, 3 times in a row, without pedaling.",
+      "media": [{"type": "video", "url": null, "caption": "Manual balance point"}],
+      "tags": ["drop", "technical"],
+      "draft": true
+    },
+    {
+      "id": "bunny_hop",
+      "name": "Bunny hop",
+      "branch": "wheel_lifts",
+      "tier": 4,
+      "prerequisites": ["manual"],
+      "description": "Getting both wheels off the ground from a roll: manual the front up, then jump your feet and push the bars forward so the rear follows.",
+      "why": "Bunny hops clear logs, holes and rocks, let you change line in the air, and are how you pop off lips for jumps and drops.",
+      "drills": [
+        {"name": "Two-part hop", "how": "Practise front up (manual), then rear up (scoop the pedals and push the bars forward), as separate moves. 10 of each, then join them."},
+        {"name": "Line to stick", "how": "Hop a line on the ground, then a stick, then a low object. Only raise the height when both wheels clear 5 times."},
+        {"name": "Trail hop", "how": "On an easy trail, hop over 5 small roots or rocks instead of rolling them."}
+      ],
+      "mastery_test": "You've got it when you can bunny hop a 15 cm (6 inch) object from a roll with both wheels clearing it, 4 times out of 5.",
+      "media": [{"type": "video", "url": null, "caption": "Bunny hop in two parts"}],
+      "tags": ["jump", "technical"],
+      "draft": true
+    },
+    {
+      "id": "pumping",
+      "name": "Pumping",
+      "branch": "air",
+      "tier": 2,
+      "prerequisites": ["attack_position"],
+      "description": "Gaining speed without pedaling by pushing the bike down into the backsides of bumps and letting it come up on the faces.",
+      "why": "Pumping is free speed and control. It's how you ride rollers, berms and jumps smoothly, and it teaches you to work with the ground instead of against it.",
+      "drills": [
+        {"name": "Pump track laps", "how": "Ride a pump track (or a run of small bumps) without pedaling. Count how far you get each lap."},
+        {"name": "Push the backside", "how": "On one roller, stay light on the way up, then push hard with arms and legs on the way down. 10 passes."},
+        {"name": "No-pedal section", "how": "Pick a short rolling bit of trail and ride it without pedaling, pumping every dip."}
+      ],
+      "mastery_test": "You've got it when you can do a full lap of a pump track, or a run of 5 rollers, without pedaling and come out at the same speed or faster.",
+      "media": [{"type": "video", "url": null, "caption": "Pumping: light up, heavy down"}],
+      "tags": ["jump", "berm"],
+      "draft": true
+    },
+    {
+      "id": "rollers",
+      "name": "Rollers",
+      "branch": "air",
+      "tier": 2,
+      "prerequisites": ["pumping"],
+      "description": "Riding a series of smooth bumps by pumping each one, keeping both wheels on the ground and staying in control at speed.",
+      "why": "Rollers teach timing over lips. Staying low over them at speed is the step before jumping off them.",
+      "drills": [
+        {"name": "Stay grounded", "how": "Ride a roller section at medium speed and keep both wheels on the ground by soaking the lips with your legs. 5 runs."},
+        {"name": "Faster each run", "how": "Ride the same rollers 5 times, adding a little speed each time, still pumping instead of getting bucked."},
+        {"name": "Speed check", "how": "Ride rollers with no pedaling and see if you hold your entry speed to the end."}
+      ],
+      "mastery_test": "You've got it when you can ride a set of rollers at speed with both wheels staying on the ground and without pedaling.",
+      "media": [{"type": "video", "url": null, "caption": "Soaking roller lips"}],
+      "tags": ["jump"],
+      "draft": true
+    },
+    {
+      "id": "tabletops",
+      "name": "Tabletops",
+      "branch": "air",
+      "tier": 3,
+      "prerequisites": ["rollers", "wheel_lift"],
+      "description": "Jumping a lip with a flat top, so coming up short lands safely on the deck. Compress into the lip, extend off it, and land with both wheels together on the down ramp.",
+      "why": "Tabletops are where jumping starts. They're forgiving, so you can learn takeoff timing and speed without the risk of a gap.",
+      "drills": [
+        {"name": "Roll it first", "how": "Roll over the tabletop slowly, then at medium speed, to learn its shape before leaving the ground."},
+        {"name": "Deck to down ramp", "how": "Add speed one run at a time: land on the deck, then the edge, then the down ramp. 2 or 3 runs at each step."},
+        {"name": "Compress and spring", "how": "Push into the face of the lip with your legs, then let the bike come up under you. Don't pull up on the bars."}
+      ],
+      "mastery_test": "You've got it when you can land on the down ramp of a small tabletop, with both wheels together and no casing, 5 times in a row.",
+      "media": [{"type": "video", "url": null, "caption": "Tabletop progression"}],
+      "tags": ["jump"],
+      "draft": true
+    },
+    {
+      "id": "gap_jumps",
+      "name": "Gap jumps",
+      "branch": "air",
+      "tier": 4,
+      "prerequisites": ["tabletops", "bunny_hop"],
+      "description": "Jumping across an open gap between a takeoff and a landing, where coming up short means casing or going into the gap.",
+      "why": "Gaps are a big step in commitment and speed judgement. Riding them well opens up jump lines and bike parks.",
+      "drills": [
+        {"name": "Speed match", "how": "Find a tabletop the same length as the gap. Ride it at the speed that lands you on its down ramp, and note that speed (or the pedal strokes it takes)."},
+        {"name": "Watch and follow", "how": "Watch a rider who clears the gap. Follow them in at their speed, with a safe distance between you."},
+        {"name": "Commit check", "how": "Before trying, roll the takeoff and landing on foot. Only go when your speed is the same as on the matched tabletop."}
+      ],
+      "mastery_test": "You've got it when you can clear a small gap jump (1–2 m) and land on the down ramp, 5 times in a row.",
+      "media": [{"type": "video", "url": null, "caption": "Gap jump: matching speed from a tabletop"}],
+      "tags": ["gap", "jump"],
+      "draft": true
+    },
+    {
+      "id": "roll_offs",
+      "name": "Roll-offs",
+      "branch": "drops",
+      "tier": 2,
+      "prerequisites": ["attack_position", "braking_control"],
+      "description": "Rolling slowly off a small ledge with the wheels following the ground: hips back, arms extended to push the front down, then absorb the landing.",
+      "why": "Roll-offs teach you to manage the moment the front drops away. They're the safe way down most ledges and the first step to drops.",
+      "drills": [
+        {"name": "Curb roll", "how": "Roll off a curb slowly, pushing the front wheel down as it goes over and moving your hips back. 10 times."},
+        {"name": "Push the bars", "how": "At the edge, extend your arms to put the front wheel on the ground, then let the back wheel follow while you stay centred."},
+        {"name": "Trail ledges", "how": "Ride 3 small trail ledges at walking pace without braking on the edge."}
+      ],
+      "mastery_test": "You've got it when you can roll off a 30 cm (1 foot) ledge at walking pace, staying centred with no nose-dive, 5 times in a row.",
+      "media": [{"type": "video", "url": null, "caption": "Roll-off: push the front down"}],
+      "tags": ["drop"],
+      "draft": true
+    },
+    {
+      "id": "small_drops",
+      "name": "Small drops",
+      "branch": "drops",
+      "tier": 3,
+      "prerequisites": ["roll_offs", "manual"],
+      "description": "Riding off a ledge at speed so both wheels land together: a small manual at the lip keeps the front up, then push the bike down to land.",
+      "why": "Above walking speed you can't roll off safely, because the front drops first. Dropping lets you ride ledges at trail speed without stopping.",
+      "drills": [
+        {"name": "Manual the lip", "how": "On a curb, ride at a moderate speed and do a small manual as the front wheel reaches the edge, so both wheels land together. 10 times."},
+        {"name": "Land and absorb", "how": "Aim to land both wheels at once and soak it up with your legs. Film one and check."},
+        {"name": "Step up the height", "how": "Move from a curb to a 40–60 cm drop only when the smaller one feels boring."}
+      ],
+      "mastery_test": "You've got it when you can ride off a 50 cm (about 2 foot) drop at trail speed and land both wheels together, 5 times in a row.",
+      "media": [{"type": "video", "url": null, "caption": "Small drop: manual the lip"}],
+      "tags": ["drop"],
+      "draft": true
+    },
+    {
+      "id": "big_drops",
+      "name": "Big drops",
+      "branch": "drops",
+      "tier": 4,
+      "prerequisites": ["small_drops", "bunny_hop"],
+      "description": "Drops over 1 m: matching speed to the landing, a confident pop or manual off the lip, and landing on a down slope with full-body absorption.",
+      "why": "Big drops are mostly speed judgement and commitment. Learning them properly is what keeps them from becoming a hospital trip.",
+      "drills": [
+        {"name": "Landing check", "how": "Before any drop, walk it. Find where the landing slopes down and the speed that puts you there."},
+        {"name": "Ladder up", "how": "Ride the next size up only after 5 clean landings on the current size."},
+        {"name": "Follow a friend", "how": "Follow a rider who's done the drop, at their speed."}
+      ],
+      "mastery_test": "You've got it when you can ride a drop of 1 m or more to a down-sloping landing, landing both wheels together and in control, 3 times in a row.",
+      "media": [{"type": "video", "url": null, "caption": "Big drop to a down slope"}],
+      "tags": ["drop"],
+      "draft": true
+    },
+    {
+      "id": "roots_and_rocks",
+      "name": "Roots and rocks",
+      "branch": "technical",
+      "tier": 2,
+      "prerequisites": ["attack_position", "looking_ahead"],
+      "description": "Rolling over loose rocks and wet or slippery roots: loose arms, weight in the feet, light on the bars, and crossing roots as straight as you can.",
+      "why": "Roots and rocks are on nearly every trail. Riding them relaxed instead of tense stops them throwing you off line.",
+      "drills": [
+        {"name": "Straight across", "how": "Find an angled root. Ride it 5 times, adjusting your line so you cross it as close to straight on as you can."},
+        {"name": "Light hands", "how": "Ride a rooty section with a looser grip than feels normal, letting the bike move under you."},
+        {"name": "Momentum run", "how": "Ride the same rocky section 3 times, a little faster each time. Speed often makes it smoother."}
+      ],
+      "mastery_test": "You've got it when you can ride a rooty or rocky section on a blue trail with no foot down and no line changes you didn't choose.",
+      "media": [{"type": "video", "url": null, "caption": "Light hands over roots"}],
+      "tags": ["roots", "technical"],
+      "draft": true
+    },
+    {
+      "id": "rock_gardens",
+      "name": "Rock gardens",
+      "branch": "technical",
+      "tier": 3,
+      "prerequisites": ["roots_and_rocks", "wheel_lift"],
+      "description": "Riding a long, dense section of rocks: pick a line before you enter, carry steady speed, lift the front over square edges and keep looking ahead.",
+      "why": "Rock gardens punish hesitation. Line choice and steady momentum make them flow instead of turning into a stop-and-dab.",
+      "drills": [
+        {"name": "Walk the line", "how": "Walk the rock garden first. Pick a line and name 3 key rocks you'll aim for."},
+        {"name": "Sections", "how": "Ride the garden in parts: top third, then two thirds, then all of it."},
+        {"name": "Same line, more speed", "how": "Ride the same line 3 times, each a bit faster, keeping off the brakes inside it."}
+      ],
+      "mastery_test": "You've got it when you can ride a whole rock garden on a blue or black trail with no foot down, on the line you picked, 3 runs in a row.",
+      "media": [{"type": "video", "url": null, "caption": "Picking a line through a rock garden"}],
+      "tags": ["rock_garden", "technical"],
+      "draft": true
+    },
+    {
+      "id": "steep_rolls",
+      "name": "Steep rolls",
+      "branch": "technical",
+      "tier": 3,
+      "prerequisites": ["roll_offs", "braking_control"],
+      "description": "Riding steep rollers and chutes: hips back and low, arms extended, smooth braking without locking up, and eyes on the run-out.",
+      "why": "Steeps are a head game as much as a skill. Good body position and brake control let you ride lines that used to mean getting off and walking.",
+      "drills": [
+        {"name": "Look at the run-out", "how": "Stand at the top of a steep roll and pick the spot where it flattens out. Keep your eyes there the whole way down."},
+        {"name": "Feather, don't lock", "how": "Ride a moderate steep, braking with steady pressure and no skids. If the rear locks, ease off."},
+        {"name": "Steeper step", "how": "Find 3 steep rolls of increasing angle and ride each until it's calm."}
+      ],
+      "mastery_test": "You've got it when you can ride a steep roll on a black trail with no skids and in control at the bottom, 3 times in a row.",
+      "media": [{"type": "video", "url": null, "caption": "Body position on a steep roll"}],
+      "tags": ["drop", "technical"],
+      "draft": true
+    }
+  ]
+}

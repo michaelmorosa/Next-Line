@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "challenges": [
+    {
+      "slug": "30-day-manual",
+      "title": "30-day manual challenge",
+      "description": "Log 10 manual sessions in 30 days. Short and often beats one long session: 10 minutes in a parking lot counts.",
+      "skills": ["manual"],
+      "goal_type": "sessions",
+      "goal_count": 10,
+      "starts_on": null,
+      "days": 30
+    }
+  ]
+}
