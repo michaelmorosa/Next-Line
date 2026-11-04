@@ -33,6 +33,14 @@ export const DIFFICULTY = {
   double_black: { label: 'Double black', color: colors.text },
 };
 
+// Skill tree states, from the server: mastered, in progress (practice logged), ready (prerequisites mastered), locked.
+export const SKILL_STATE = {
+  mastered: { label: 'Mastered', color: colors.accent, icon: 'checkmark-circle' },
+  in_progress: { label: 'In progress', color: colors.accent, icon: 'ellipsis-horizontal-circle' },
+  ready: { label: 'Ready', color: colors.text, icon: 'radio-button-off' },
+  locked: { label: 'Locked', color: colors.muted, icon: 'lock-closed' },
+};
+
 export const ui = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 20, paddingBottom: 40, gap: 14 },

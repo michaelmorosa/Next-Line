@@ -101,3 +101,16 @@ export async function publicPost(url, body) {
   }
   return data;
 }
+
+// Multipart upload (attempt videos). Don't set Content-Type: fetch adds the multipart boundary itself.
+export function sendForm(url, form, logout, timeoutMs = 180000) {
+  return fetchJson(url, { logout, method: 'POST', body: form, timeoutMs });
+}
+
+// A source for expo-video that plays a private file from the API with the rider's token. Checks the token first
+// (refreshing it if it's expired), because the video player can't.
+export async function privateVideoSource(url, logout) {
+  const res = await authorizedFetch(url, { method: 'HEAD' }, logout);
+  if (!res.ok) throw new Error("Couldn't load the video.");
+  return { uri: `${API_URL}${url}`, headers: { Authorization: `Bearer ${await AsyncStorage.getItem('access')}` } };
+}

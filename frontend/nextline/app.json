@@ -46,7 +46,16 @@
         {
           "motionPermission": "Next Line uses motion sensors to detect jumps, airtime and crashes while you ride."
         }
-      ]
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Next Line lets you pick attempt videos from your library so you can compare your tries at a skill.",
+          "cameraPermission": "Next Line uses the camera to film attempt videos of the skills you're practising.",
+          "microphonePermission": "Next Line records sound with attempt videos you film."
+        }
+      ],
+      "expo-video"
     ],
     "extra": {
       "eas": {

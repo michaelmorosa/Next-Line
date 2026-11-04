@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import ScreenContainer from './ScreenContainer';
 import LevelGuideScreen from './screens/LevelGuideScreen';
 import LoginScreen from './screens/LoginScreen';
+import MasteryScreen from './screens/MasteryScreen';
 import PinFeatureScreen from './screens/PinFeatureScreen';
 import ProgressScreen from './screens/ProgressScreen';
 import RecordScreen from './screens/RecordScreen';
@@ -11,6 +12,8 @@ import RideSummaryScreen from './screens/RideSummaryScreen';
 import RidesScreen from './screens/RidesScreen';
 import SensorLabScreen from './screens/SensorLabScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import SkillScreen from './screens/SkillScreen';
+import SkillTreeScreen from './screens/SkillTreeScreen';
 import TrailScreen from './screens/TrailScreen';
 import TrailsScreen from './screens/TrailsScreen';
 import { colors } from './theme';
@@ -22,11 +25,14 @@ const APP_SCREENS = [
   { name: 'Rides', component: RidesScreen },
   { name: 'Record', component: RecordScreen },
   { name: 'Trails', component: TrailsScreen },
+  { name: 'Skills', component: SkillTreeScreen },
   { name: 'Progress', component: ProgressScreen },
   { name: 'LevelGuide', component: LevelGuideScreen },
   { name: 'RideSummary', component: RideSummaryScreen },
   { name: 'Trail', component: TrailScreen },
   { name: 'PinFeature', component: PinFeatureScreen },
+  { name: 'Skill', component: SkillScreen },
+  { name: 'Mastery', component: MasteryScreen },
   { name: 'Settings', component: SettingsScreen },
   { name: 'SensorLab', component: SensorLabScreen },
 ];

@@ -62,3 +62,20 @@ export function feetDown(n) {
   if (!n) return 'clean';
   return `${n} ${n === 1 ? 'foot' : 'feet'} down`;
 }
+
+// Today's date where the rider is, "2026-11-04". Practice is logged against it, so an evening session counts today.
+export function localDay(date = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+// "Oct 4" for a date-only "2026-10-04", read as a local date (new Date() would read it as UTC midnight).
+export function dateOnly(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number);
+  return shortDate(new Date(y, m - 1, d).toISOString());
+}
+
+// "+10 XP", "−5 XP".
+export function xp(amount) {
+  return `${amount < 0 ? '−' : '+'}${Math.abs(amount).toLocaleString()} XP`;
+}

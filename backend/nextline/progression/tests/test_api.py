@@ -85,6 +85,16 @@ class PracticeApiTests(ApiTestCase):
         self.assertEqual(res.data['level']['total'], 10)
         self.assertEqual(res.data['session']['drill'], 'Parking-lot hover')
 
+    def test_detail_has_counts_and_rows(self):
+        self.session('attack_position', drill_index=1)
+        self.session('attack_position')
+        self.attempt('attack_position')
+        res = self.client.get('/api/skills/attack_position/')
+        self.assertEqual((res.data['sessions'], res.data['attempts']), (2, 1))
+        self.assertEqual([h['drill'] for h in res.data['history']], [None, 'Bump soak'])
+        self.assertEqual(len(res.data['attempt_videos']), 1)
+        self.assertEqual(res.data['requirements']['min_sessions'], 3)
+
     def test_cap_reported(self):
         for _ in range(3):
             self.session('attack_position')

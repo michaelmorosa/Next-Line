@@ -127,10 +127,11 @@ def skill_detail(request, skill_id):
             'mastered_at': mastery.mastered_at, 'confirmed_test': mastery.confirmed_test,
             'coach_verified': mastery.coach_verified,
         },
-        'sessions': SessionSerializer(
+        # 'sessions' and 'attempts' (counts) come from rider_skills; these are the rows.
+        'history': SessionSerializer(
             PracticeSession.objects.filter(user=user, skill_id=skill_id)[:HISTORY_SESSIONS], many=True,
         ).data,
-        'attempts': AttemptSerializer(Attempt.objects.filter(user=user, skill_id=skill_id), many=True).data,
+        'attempt_videos': AttemptSerializer(Attempt.objects.filter(user=user, skill_id=skill_id), many=True).data,
         'nearby_features': nearby_features(request, skill),
         'requirements': content.rules()['mastery'],
     })
