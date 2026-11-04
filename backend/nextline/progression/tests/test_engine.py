@@ -4,7 +4,7 @@ from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from progression import content, services, xp
-from progression.models import Challenge, ChallengeEntry, Mastery, Reason, XPEntry
+from progression.models import Challenge, ChallengeEntry, Mastery, PracticeSession, Reason, XPEntry
 from progression.services import ProgressionError
 from progression.state import (
     IN_PROGRESS, LOCKED, MASTERED, READY, missing_for_mastery, newly_ready, next_up, rider_skills, skill_state,
@@ -262,7 +262,9 @@ class ChallengeTests(TempMediaMixin, TestCase):
         self.assertEqual(challenge.ends_on - challenge.starts_on, timedelta(days=29))
         for skill in ('attack_position', 'pumping', 'wheel_lift'):
             master(self.user, skill, self.today)
-        practise(self.user, 'manual', self.today)  # before joining: doesn't count
+        before = practise(self.user, 'manual', self.today)['session']  # before joining: doesn't count
+        # Clock resolution on some systems can give the session and the join the same timestamp.
+        PracticeSession.objects.filter(id=before.id).update(logged_at=timezone.now() - timedelta(minutes=1))
         entry = services.join_challenge(self.user, challenge, self.today)
         self.assertEqual(services.challenge_progress(entry), 0)
         for i in range(9):
