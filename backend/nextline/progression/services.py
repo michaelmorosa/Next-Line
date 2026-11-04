@@ -36,8 +36,12 @@ def require_practicable(user, skill):
         raise ProgressionError(f"{skill['name']} is locked. Master {needs} first.")
 
 
-def log_session(user, skill_id, practiced_on, *, client_id=None, drill_index=None, note='', ride=None, today=None):
-    """Save a drill session and award what it earned. Returns {session, created, awards, capped, challenges}."""
+def log_session(user, skill_id, practiced_on, *, client_id=None, drill_index=None, note='', ride=None, today=None,
+                at=None):
+    """Save a drill session and award what it earned. Returns {session, created, awards, capped, challenges}.
+
+    `at` backdates it (the demo rider); the API always logs now.
+    """
     skill = get_skill(skill_id)
     check_local_date(practiced_on, today)
     if drill_index is not None and not 0 <= drill_index < len(skill['drills']):
@@ -51,16 +55,17 @@ def log_session(user, skill_id, practiced_on, *, client_id=None, drill_index=Non
     with transaction.atomic():
         session = PracticeSession.objects.create(
             user=user, skill_id=skill_id, practiced_on=practiced_on, drill_index=drill_index, note=note, ride=ride,
-            **extra,
+            logged_at=at or timezone.now(), **extra,
         )
         earned = xp.award_session(session)
-        awards = [a for a in (earned, xp.award_streak(user, practiced_on)) if a]
-        completed = check_challenges(user)
+        awards = [a for a in (earned, xp.award_streak(user, practiced_on, at)) if a]
+        completed = check_challenges(user, at)
     awards += [c['award'] for c in completed if c['award']]
     return {'session': session, 'created': True, 'awards': awards, 'capped': earned is None, 'challenges': completed}
 
 
-def add_attempt(user, skill_id, video, practiced_on, *, client_id=None, duration_s=None, note='', today=None):
+def add_attempt(user, skill_id, video, practiced_on, *, client_id=None, duration_s=None, note='', today=None,
+                at=None):
     """Save an attempt video and award what it earned. Same shape as log_session, with 'attempt'."""
     skill = get_skill(skill_id)
     check_local_date(practiced_on, today)
@@ -75,17 +80,17 @@ def add_attempt(user, skill_id, video, practiced_on, *, client_id=None, duration
     extra = {'client_id': client_id} if client_id else {}
     with transaction.atomic():
         attempt = Attempt(user=user, skill_id=skill_id, practiced_on=practiced_on, duration_s=duration_s, note=note,
-                          **extra)
+                          created_at=at or timezone.now(), **extra)
         attempt.video.save(getattr(video, 'name', 'attempt.mp4'), video, save=False)
         attempt.save()
         earned = xp.award_attempt(attempt)
-        awards = [a for a in (earned, xp.award_streak(user, practiced_on)) if a]
-        completed = check_challenges(user)
+        awards = [a for a in (earned, xp.award_streak(user, practiced_on, at)) if a]
+        completed = check_challenges(user, at)
     awards += [c['award'] for c in completed if c['award']]
     return {'attempt': attempt, 'created': True, 'awards': awards, 'capped': earned is None, 'challenges': completed}
 
 
-def master_skill(user, skill_id, confirmed_test):
+def master_skill(user, skill_id, confirmed_test, at=None):
     """Record a mastery once the requirements are met and the rider confirms the test.
 
     Returns {mastery, awards, unlocked (skill ids that just became ready), level_before, level_after, challenges}.
@@ -106,10 +111,11 @@ def master_skill(user, skill_id, confirmed_test):
     mastered_before = {sid for sid, s in states.items() if s['state'] == 'mastered'}
     try:
         with transaction.atomic():
-            mastery = Mastery.objects.create(user=user, skill_id=skill_id, confirmed_test=bool(confirmed_test))
+            mastery = Mastery.objects.create(user=user, skill_id=skill_id, confirmed_test=bool(confirmed_test),
+                                             mastered_at=at or timezone.now())
             earned = xp.award(user, Reason.MASTERY, f'mastery:{skill_id}',
-                              rules['xp']['mastery_per_tier'] * skill['tier'], skill_id=skill_id)
-            completed = check_challenges(user)
+                              rules['xp']['mastery_per_tier'] * skill['tier'], skill_id=skill_id, at=at)
+            completed = check_challenges(user, at)
     except IntegrityError:
         raise ProgressionError(f"You've already mastered {skill['name']}.")
     awards = [a for a in [earned] + [c['award'] for c in completed] if a]
@@ -152,16 +158,16 @@ def challenge_progress(entry):
     ).count()
 
 
-def check_challenges(user):
+def check_challenges(user, at=None):
     """Complete any joined challenge whose goal is now met. Returns [{entry, award}] for the ones just completed."""
     done = []
     for entry in ChallengeEntry.objects.filter(user=user, completed_at__isnull=True).select_related('challenge'):
         if challenge_progress(entry) < entry.challenge.goal_count:
             continue
-        entry.completed_at = timezone.now()
+        entry.completed_at = at or timezone.now()
         entry.save(update_fields=['completed_at'])
         earned = xp.award(user, Reason.CHALLENGE, f'challenge:{entry.challenge_id}',
-                          content.rules()['xp']['challenge_complete'], challenge=entry.challenge)
+                          content.rules()['xp']['challenge_complete'], challenge=entry.challenge, at=at)
         done.append({'entry': entry, 'award': earned})
     return done
 

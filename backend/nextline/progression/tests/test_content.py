@@ -7,7 +7,7 @@ from pathlib import Path
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from progression import content
 from progression.content import depths, find_cycle, unlocks, validate, validate_challenges, validate_rules, validate_skills
@@ -169,3 +169,12 @@ class ValidateCommandTests(SimpleTestCase):
         Path(folder, 'skills.json').write_text(json.dumps(data), encoding='utf-8')
         with self.assertRaises(CommandError):
             call_command('validate_progression', dir=folder, stdout=io.StringIO(), stderr=io.StringIO())
+
+
+class MigrationsTests(TestCase):
+    def test_no_missing_migrations(self):
+        out = io.StringIO()
+        try:
+            call_command('makemigrations', check=True, dry_run=True, stdout=out, stderr=out)
+        except SystemExit:
+            self.fail(f'Model changes without a migration:\n{out.getvalue()}')

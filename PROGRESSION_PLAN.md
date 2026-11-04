@@ -1,6 +1,15 @@
 # Progression system plan: skill tree, XP and levels
 
-Status: **approved, in progress.** Decisions are listed at the end.
+Status: **built** (phases 0–7). Decisions are listed at the end. The README's "Progression" section is the
+up-to-date reference; this plan is kept for the reasoning.
+
+Changes made while building:
+- **Clean climbs earn XP** (15 × trail difficulty, first time). The old level paid for them, and without it climbers
+  would have lost out.
+- **Ride XP moved to phase 4** with the other ride-derived XP (descent, jumps, PRs, air, features), instead of
+  phase 3.
+- **Practice dates are the rider's local date**, sent by the app, so evening sessions count on the right day.
+- **Deleting a ride** adds correction entries for what it earned, keeping the ledger append-only.
 
 ## 1. What exists today
 

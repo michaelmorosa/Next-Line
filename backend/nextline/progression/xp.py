@@ -119,12 +119,12 @@ def practice_streak(user, today=None):
     return streak
 
 
-def award_streak(user, day):
+def award_streak(user, day, at=None):
     """The weekly practice bonus, the first time the week of `day` has enough practice days."""
     monday = week_start(day)
     if monday not in qualifying_weeks({d for d in practice_days(user) if week_start(d) == monday}):
         return None
-    return award(user, Reason.STREAK, f'streak:{week_key(day)}', content.rules()['xp']['weekly_streak'])
+    return award(user, Reason.STREAK, f'streak:{week_key(day)}', content.rules()['xp']['weekly_streak'], at=at)
 
 
 # Capped awards.
