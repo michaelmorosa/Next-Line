@@ -13,6 +13,7 @@ router.register(r'features', FeatureViewSet, basename='feature')
 
 urlpatterns = [
     path('api/', include(router.urls)),
+    path('api/', include('progression.urls')),
     path('api/progress/', progress, name='progress'),
     path('api/level-rules/', level_rules, name='level-rules'),
     path('api/crash-alerts/', crash_alert, name='crash-alert'),
