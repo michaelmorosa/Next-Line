@@ -18,7 +18,7 @@ MIN_DRILLS, MAX_DRILLS = 2, 3
 FEATURE_TAGS = {'drop', 'jump', 'gap', 'rock_garden', 'roots', 'berm', 'technical'}
 XP_KEYS = (
     'drill_session', 'attempt_video', 'mastery_per_tier', 'challenge_complete', 'weekly_streak', 'ride',
-    'feature_cleaned_per_weight', 'trail_pr', 'biggest_air', 'descent_per_100m', 'jump',
+    'feature_cleaned_per_weight', 'trail_pr', 'clean_climb_per_weight', 'biggest_air', 'descent_per_100m', 'jump',
 )
 CAP_KEYS = ('drill_sessions_per_skill_per_day', 'attempt_videos_per_skill_per_day', 'descent_xp_per_day', 'jump_xp_per_day')
 GOAL_TYPES = ('sessions', 'master')

@@ -1,5 +1,6 @@
 from django.db.models import Count, Max, Min, Q
 
+from progression import ride_xp
 from rides import achievements
 from django.shortcuts import get_object_or_404
 from rest_framework import mixins, status, viewsets
@@ -97,6 +98,7 @@ class FeatureViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
         serializer = FeatureProgressSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(request.user, feature)
+        ride_xp.award_features(request.user)
         feature = features_with_counts(request.user).get(pk=feature.pk)
         context = {'request': request, 'progress': progress_for(request.user, [feature])}
         body = FeatureSerializer(feature, context=context).data

@@ -4,15 +4,17 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from progression.models import Reason, XPEntry
+from progression.xp import thresholds, total_xp
 from trails.models import Feature, FeatureProgress, FeatureStatus, Trail
 
 from . import analysis
 from .models import CrashAlert, Ride, TrailEffort
-from .tiers import TIERS
 
 User = get_user_model()
 
@@ -389,8 +391,10 @@ class ProgressTests(TestCase):
     def test_empty(self):
         res = self.client.get('/api/progress/')
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.data['level']['points'], 0)
-        self.assertEqual(res.data['level']['tier'], 'Beginner I')
+        self.assertEqual((res.data['level']['total'], res.data['level']['level']), (0, 1))
+        self.assertEqual(res.data['level']['title'], 'PQ Punk')
+        self.assertEqual(res.data['skills']['mastered'], 0)
+        self.assertEqual(res.data['practice_streak_weeks'], 0)
         self.assertEqual(len(res.data['flow_weeks']), 8)
         self.assertIsNone(res.data['favorite_trail'])
 
@@ -403,9 +407,14 @@ class ProgressTests(TestCase):
         upload(self.client, make_track(descent_speed=7.5), started_at=now - timedelta(hours=1))
         res = self.client.get('/api/progress/')
         level = res.data['level']
-        self.assertGreater(level['points'], 0)
+        self.assertGreater(level['total'], 0)
         self.assertGreater(level['gain_30d'], 0)
-        self.assertIn(level['to_next'] + level['points'], [threshold for threshold, _, _ in TIERS])
+        self.assertLess(level['gain_30d'], level['total'])
+        self.assertIn(level['to_next'] + level['total'], thresholds())
+        self.assertEqual(level['title'], 'PQ Punk')
+        self.assertEqual(res.data['skills']['total'], 19)
+        self.assertEqual(len(res.data['skills']['next_up']), 3)
+        self.assertTrue(res.data['next_milestone'].startswith(f"{level['to_next']:,} XP to level 2"))
         favorite = res.data['favorite_trail']
         self.assertEqual(len(favorite['efforts']), 3)
         self.assertLess(favorite['best_s'], favorite['first_s'])
@@ -417,38 +426,56 @@ class ProgressTests(TestCase):
         self.assertAlmostEqual(climbing['longest_nonstop_m'], 150, delta=10)
         self.assertEqual(len(res.data['favorite_climb']['efforts']), 3)
 
-    def test_climbing_raises_level(self):
-        from .scoring import CLEAN_CLIMB_POINTS, CLIMB_RATE_POINTS_CAP, level_points
-        upload(self.client)  # 150 m in 10 minutes, no foot down
-        _, parts = level_points(self.user)
-        clean = CLEAN_CLIMB_POINTS  # one unrated climb cleaned
-        rate = CLIMB_RATE_POINTS_CAP * 900 / 1200
-        nonstop = 75  # 150 m at half a point per metre
-        self.assertAlmostEqual(parts['climbing'], clean + rate + nonstop, delta=12)
+    def test_ride_xp(self):
+        # 150 m down (1 XP), one jump (1), biggest air (10), first clean climb (15), the ride itself (2).
+        res = upload(self.client, jumps=[{'t': 700, 'airtime_s': 0.4}])
+        items = {i['label']: i['amount'] for i in res.data['xp']['items']}
+        self.assertEqual(items, {'Ride': 2, 'Metres descended': 1, 'Jumps': 1, 'Biggest air': 10, 'Clean climb': 15})
+        self.assertEqual(res.data['xp']['xp'], 29)
+        self.assertEqual(res.data['xp']['level']['total'], 29)
 
-        climb = Trail.objects.filter(direction='climb')
-        climb.update(difficulty='black')  # the rider's own rating: counts as blue
-        self.assertAlmostEqual(level_points(self.user)[1]['climbing'] - parts['climbing'], clean * 1, delta=1)
-        climb.update(owner=None)  # a shared black climb counts in full
-        self.assertAlmostEqual(level_points(self.user)[1]['climbing'] - parts['climbing'], clean * 3, delta=1)
+    def test_pr_and_air_only_when_better(self):
+        upload(self.client, make_track(descent_speed=6), started_at=timezone.now() - timedelta(days=2),
+               jumps=[{'t': 700, 'airtime_s': 0.6}])
+        slower = upload(self.client, make_track(descent_speed=5), started_at=timezone.now() - timedelta(days=1),
+                        jumps=[{'t': 700, 'airtime_s': 0.4}])
+        labels = {i['label'] for i in slower.data['xp']['items']}
+        self.assertNotIn('Trail PR', labels)
+        self.assertNotIn('Biggest air', labels)
+        self.assertNotIn('Clean climb', labels)  # only the first time
+        faster = upload(self.client, make_track(descent_speed=8), jumps=[{'t': 700, 'airtime_s': 0.8}])
+        items = {i['label']: i['amount'] for i in faster.data['xp']['items']}
+        self.assertEqual((items['Trail PR'], items['Biggest air']), (10, 10))
 
-    def test_climbing_fitness_is_capped(self):
-        from .scoring import CLIMB_RATE_POINTS_CAP, NONSTOP_POINTS_CAP, climbing_points
-        Ride.objects.create(user=self.user, client_id=uuid.uuid4(), started_at=timezone.now(), elapsed_s=1,
-                            climb_time_s=3600, climb_rate=1900, longest_nonstop_climb_m=1500)
-        self.assertEqual(climbing_points(self.user, Ride.objects.filter(user=self.user)),
-                         CLIMB_RATE_POINTS_CAP + NONSTOP_POINTS_CAP)
+    def test_descent_and_jump_xp_capped_per_day(self):
+        day = timezone.now() - timedelta(days=3)
+        jumps = [{'t': 100 + i * 10, 'airtime_s': 0.3} for i in range(8)]
+        for i in range(3):
+            upload(self.client, make_track(drop=600), started_at=day + timedelta(hours=i), jumps=jumps)
 
-    def test_short_climb_burst_does_not_set_best_rate(self):
-        from .scoring import climbing_points
-        Ride.objects.create(user=self.user, client_id=uuid.uuid4(), started_at=timezone.now(), elapsed_s=1,
-                            climb_time_s=60, climb_rate=1800)
-        self.assertEqual(climbing_points(self.user, Ride.objects.filter(user=self.user)), 0)
+        def total(reason):
+            return XPEntry.objects.filter(user=self.user, reason=reason).aggregate(t=Sum('amount'))['t']
 
-    def big_air_points(self, airtime_s):
-        """A ride whose only points are air: 400 per second of the biggest air."""
-        Ride.objects.create(user=self.user, client_id=uuid.uuid4(), started_at=timezone.now(), elapsed_s=1,
-                            biggest_air_s=airtime_s)
+        self.assertEqual((total(Reason.DESCENT), total(Reason.JUMPS)), (15, 10))
+        # A new day starts fresh.
+        upload(self.client, make_track(drop=600), started_at=day + timedelta(days=1), jumps=jumps)
+        self.assertEqual(total(Reason.JUMPS), 18)
+
+    def test_deleting_a_ride_undoes_its_xp(self):
+        ride = upload(self.client, jumps=[{'t': 700, 'airtime_s': 0.4}]).data
+        self.assertEqual(total_xp(self.user), 29)
+        self.assertEqual(self.client.delete(f"/api/rides/{ride['id']}/").status_code, 204)
+        self.assertEqual(total_xp(self.user), 0)
+        self.assertEqual(XPEntry.objects.filter(user=self.user, reason=Reason.CORRECTION).count(), 5)
+
+    def test_clean_climb_xp_uses_trusted_difficulty(self):
+        upload(self.client, started_at=timezone.now() - timedelta(days=1))
+        climb = Trail.objects.get(direction='climb')
+        climb.difficulty = 'black'
+        climb.save()  # the rider's own rating: counts as blue (x2)
+        TrailEffort.objects.filter(trail=climb).delete()  # so the next clean run is the first
+        res = upload(self.client)
+        self.assertEqual({i['label']: i['amount'] for i in res.data['xp']['items']}['Clean climb'], 30)
 
     def clean_features(self, difficulty, count, owner=None):
         trail = Trail.objects.create(name=f'{difficulty} trail', difficulty=difficulty, owner=owner, start_lat=0,
@@ -458,35 +485,16 @@ class ProgressTests(TestCase):
             FeatureProgress.objects.create(user=self.user, feature=feature, status='cleaned', clean_count=1,
                                            first_cleaned_at=timezone.now())
 
-    def ride_in_past_weeks(self, weeks):
-        for w in range(1, weeks + 1):
-            Ride.objects.create(user=self.user, client_id=uuid.uuid4(), elapsed_s=1,
-                                started_at=timezone.now() - timedelta(weeks=w))
-
-    def test_points_alone_do_not_unlock_a_tier(self):
-        self.big_air_points(6.0)  # 2400 points: past Intermediate I's 2000
-        data = self.client.get('/api/progress/').data
-        level = data['level']
-        self.assertEqual(level['tier'], 'Beginner III')
-        self.assertEqual((level['next_tier'], level['to_next']), ('Intermediate I', 0))
-        self.assertEqual(level['requirements'], [
-            {'kind': 'features', 'difficulty': 'blue', 'label': '5 blue (or harder) features cleaned',
-             'needed': 5, 'have': 0, 'met': False},
-            {'kind': 'weeks', 'difficulty': None, 'label': '4 active weeks', 'needed': 4, 'have': 1, 'met': False},
-        ])
-        self.assertIn('Still needed: 5 blue (or harder) features cleaned (0/5)', data['next_milestone'])
-
-        self.clean_features('blue', 5)
-        self.ride_in_past_weeks(3)  # 4 active weeks with this one
-        self.assertEqual(self.client.get('/api/progress/').data['level']['tier'], 'Intermediate I')
-
     def test_rider_rated_black_counts_as_blue(self):
-        from .scoring import FEATURE_POINTS, level_points
+        from progression.ride_xp import award_features
         self.clean_features('black', 3, owner=self.user)
-        self.assertEqual(level_points(self.user)[1]['features'], 3 * FEATURE_POINTS * 2)
-        from .tiers import requirement_stats
-        stats = requirement_stats(self.user)
-        self.assertEqual((stats['features']['blue'], stats['features']['black']), (3, 0))
+        self.assertEqual(sum(e.amount for e in award_features(self.user)), 3 * 20 * 2)
+        self.assertEqual(award_features(self.user), [])  # paid once
+        self.clean_features('black', 1)  # shared black: full weight
+        self.assertEqual([e.amount for e in award_features(self.user)], [80])
+        from .achievements import cleaned_feature_counts
+        counts = cleaned_feature_counts(self.user)
+        self.assertEqual((counts['blue'], counts['black']), (4, 1))
 
     def test_mastered_trails_by_difficulty(self):
         from .achievements import mastered_trail_counts
@@ -494,26 +502,6 @@ class ProgressTests(TestCase):
         self.clean_features('black', 3, owner=self.user)  # rider-rated: counts as blue
         self.clean_features('black', 2)  # not mastered: needs 3 features
         self.assertEqual(mastered_trail_counts(self.user), {'any': 2, 'blue': 2, 'black': 0, 'double_black': 0})
-
-    def test_active_weeks_count_distinct_weeks(self):
-        from .tiers import active_weeks
-        self.ride_in_past_weeks(3)
-        Ride.objects.create(user=self.user, client_id=uuid.uuid4(), elapsed_s=1,
-                            started_at=timezone.now() - timedelta(weeks=1, minutes=5))
-        self.assertEqual(active_weeks(self.user), 3)
-
-    def test_expert_is_a_long_way_off(self):
-        self.assertEqual(TIERS[-1][:2], (16000, 'Expert'))
-        self.assertEqual(TIERS[-1][2]['weeks'], 52)
-
-    def test_only_best_ten_descents_score_speed(self):
-        from .scoring import SPEED_POINTS_PER_MS, SPEED_TRAILS_COUNTED, level_points
-        ride = Ride.objects.create(user=self.user, client_id=uuid.uuid4(), started_at=timezone.now(), elapsed_s=1)
-        for i in range(SPEED_TRAILS_COUNTED + 5):
-            trail = Trail.objects.create(name=f't{i}', start_lat=0, start_lng=0, end_lat=0, end_lng=0, length_m=1)
-            TrailEffort.objects.create(ride=ride, trail=trail, user=self.user, start_t=0, elapsed_s=60, avg_speed=5,
-                                       started_at=timezone.now())
-        self.assertEqual(level_points(self.user)[1]['speed'], SPEED_TRAILS_COUNTED * SPEED_POINTS_PER_MS * 5)
 
     def test_achievements_are_earned_once(self):
         res = upload(self.client, jumps=[{'t': 700, 'airtime_s': 0.6}])
@@ -533,48 +521,38 @@ class ProgressTests(TestCase):
         self.clean_features('black', 1)
         self.assertIn('black_feature', award(self.user))
 
-    def test_ride_shows_level_points_it_earned(self):
-        upload(self.client, make_track(), started_at=timezone.now() - timedelta(days=2),
-               jumps=[{'t': 700, 'airtime_s': 0.4}])
-        res = upload(self.client, make_track(descent_speed=7.5), jumps=[{'t': 700, 'airtime_s': 0.6}])
-        gain = res.data['level_gain']
-        self.assertGreater(gain['points'], 0)
-        self.assertEqual(gain['parts']['air'], round(400 * 0.2) + 1)  # 0.2 s more air, one more jump
-        self.assertIn('Biggest air yet: 0.60 s', gain['highlights'])
-        self.assertTrue(any(h.startswith('New PR on') for h in gain['highlights']))
-
-    def test_cleaning_a_feature_shows_in_the_ride_gain(self):
+    def test_cleaning_a_feature_shows_in_the_ride_xp(self):
         ride = upload(self.client).data
         trail = descent_trail()
         lat, lng = trail.path[5]
         feature = Feature.objects.create(trail=trail, name='Root staircase', lat=lat, lng=lng)
         res = self.client.post(f"/api/rides/{ride['id']}/checkin/", {'cleaned': [feature.id]}, format='json')
-        self.assertEqual(res.data['level_gain']['parts']['features'], 25)
-        self.assertIn('Cleaned Root staircase for the first time (+25)', res.data['level_gain']['highlights'])
+        self.assertEqual({i['label']: i['amount'] for i in res.data['xp']['items']}['Feature cleaned'], 20)
 
-    def test_suggestions_put_the_tier_requirement_first(self):
-        self.big_air_points(6.0)
+    def test_suggestions_with_xp(self):
         upload(self.client)
         mine = descent_trail()
         Feature.objects.create(trail=mine, name='Easy drop', lat=mine.path[3][0], lng=mine.path[3][1])
         shared = Trail.objects.create(name='Rattlesnake DH', difficulty='black', start_lat=0, start_lng=0, end_lat=0,
                                       end_lng=0, length_m=1)
         rock = Feature.objects.create(trail=shared, name='Rock garden', lat=0, lng=0)
+        FeatureProgress.objects.create(user=self.user, feature=rock, status='almost')
         suggestions = self.client.get('/api/progress/').data['suggestions']
-        self.assertEqual(suggestions[0]['title'], 'Clean Rock garden')
-        self.assertIn('counts toward Intermediate I', suggestions[0]['detail'])
-        self.assertIn('Ride in 3 more weeks', [s['title'] for s in suggestions])
-        self.assertEqual(suggestions[0]['points'], 100)
-        self.assertIn('Clean Easy drop', [s['title'] for s in suggestions])
+        self.assertEqual(suggestions[0]['title'], 'Clean Rock garden')  # almost got it
+        self.assertEqual(suggestions[0]['xp'], 80)
         self.assertEqual(rock.trail_id, suggestions[0]['trail'])
+        self.assertIn('Clean Easy drop', [s['title'] for s in suggestions])
 
     def test_level_rules(self):
         rules = self.client.get('/api/level-rules/').data
-        self.assertEqual(rules['tiers'][3]['requirements'], ['5 blue (or harder) features cleaned', '4 active weeks'])
-        self.assertEqual(rules['tiers'][-1]['requirements'],
-                         ['8 double-black features cleaned', '1 double-black trail mastered', '52 active weeks'])
+        self.assertEqual(len(rules['levels']), 20)
+        self.assertEqual(rules['levels'][1], {'level': 2, 'xp': 100, 'title': 'PQ Punk'})
+        self.assertEqual(rules['levels'][-1]['title'], 'Line Legend')
         self.assertEqual(rules['rider_rated_max'], 'Blue')
-        self.assertEqual([s['key'] for s in rules['sources']], ['features', 'speed', 'air', 'descent', 'climbing'])
+        keys = [s['key'] for s in rules['sources']]
+        self.assertEqual(keys[:3], ['session', 'attempt', 'mastery'])
+        self.assertIn('descent', keys)
+        self.assertIn('jumps', keys)
 
     def test_streak_counts_consecutive_weeks(self):
         from .scoring import ride_streak

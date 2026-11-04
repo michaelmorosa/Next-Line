@@ -208,13 +208,14 @@ class FeatureApprovalTests(TestCase):
         res = self.other_client.put(f"/api/features/{pinned['id']}/progress/", {'status': 'cleaned'}, format='json')
         self.assertEqual(res.status_code, 404)
 
-    def test_pending_feature_earns_no_points_until_approved(self):
-        from rides.scoring import level_points
+    def test_pending_feature_earns_no_xp_until_approved(self):
+        from progression.xp import total_xp
         pinned = self.pin(self.client, self.shared)
         self.client.put(f"/api/features/{pinned['id']}/progress/", {'status': 'cleaned'}, format='json')
-        self.assertEqual(level_points(self.rider)[1]['features'], 0)
+        self.assertEqual(total_xp(self.rider), 0)
         Feature.objects.filter(pk=pinned['id']).update(approved=True)
-        self.assertEqual(level_points(self.rider)[1]['features'], 100)  # 25 x black
+        self.client.get('/api/progress/')  # pays out pins approved since
+        self.assertEqual(total_xp(self.rider), 80)  # 20 x black
 
     def test_pins_on_your_own_trail_and_by_staff_are_live(self):
         upload(self.client)

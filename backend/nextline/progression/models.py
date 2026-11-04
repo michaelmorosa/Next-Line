@@ -127,6 +127,7 @@ class Reason(models.TextChoices):
     JUMPS = 'jumps', 'Jumps'
     FEATURE = 'feature', 'Feature cleaned'
     PR = 'pr', 'Trail PR'
+    CLEAN_CLIMB = 'clean_climb', 'Clean climb'
     AIR = 'air', 'Biggest air'
     CORRECTION = 'correction', 'Correction'
 

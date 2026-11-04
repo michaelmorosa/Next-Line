@@ -10,7 +10,7 @@ class Difficulty(models.TextChoices):
     DOUBLE_BLACK = 'double_black', 'Double black'
 
 
-# How much a trail's difficulty counts toward rider level (rides/scoring.py).
+# How much a trail's difficulty multiplies XP for features and clean climbs (progression/ride_xp.py).
 DIFFICULTY_WEIGHT = {
     Difficulty.UNRATED: 1.0,
     Difficulty.GREEN: 1.0,

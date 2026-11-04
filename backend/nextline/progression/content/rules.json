@@ -9,6 +9,7 @@
     "ride": 2,
     "feature_cleaned_per_weight": 20,
     "trail_pr": 10,
+    "clean_climb_per_weight": 15,
     "biggest_air": 10,
     "descent_per_100m": 1,
     "jump": 1

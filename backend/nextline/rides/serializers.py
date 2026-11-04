@@ -2,11 +2,12 @@ from django.conf import settings
 from django.db.models import Count, Q
 from rest_framework import serializers
 
+from progression import ride_xp
 from trails.models import Direction, Feature, Trail
 from trails.serializers import FeatureSerializer, progress_for
 from trails.views import features_with_counts
 
-from . import level_guide, scoring
+from . import scoring
 from .models import Jump, Ride, TrailEffort
 
 
@@ -99,18 +100,18 @@ class RideDetailSerializer(RideListSerializer):
     biggest_air_is_pb = serializers.SerializerMethodField()
     speed_rank = serializers.SerializerMethodField()
     laps = serializers.SerializerMethodField()
-    level_gain = serializers.SerializerMethodField()
+    xp = serializers.SerializerMethodField()
     features = serializers.SerializerMethodField()
 
     class Meta(RideListSerializer.Meta):
         fields = RideListSerializer.Meta.fields + (
             'max_speed', 'total_air_s', 'climb_time_s', 'descent_time_s', 'longest_nonstop_climb_m', 'climb_rests',
             'climb_pace_held', 'track', 'confidence', 'crashed', 'notes', 'cleaned_features',
-            'jumps', 'efforts', 'laps', 'level_gain', 'flow_vs_avg', 'biggest_air_is_pb', 'speed_rank', 'features',
+            'jumps', 'efforts', 'laps', 'xp', 'flow_vs_avg', 'biggest_air_is_pb', 'speed_rank', 'features',
         )
 
-    def get_level_gain(self, obj):
-        return level_guide.ride_level_gain(obj)
+    def get_xp(self, obj):
+        return ride_xp.ride_xp(obj)
 
     def get_laps(self, obj):
         """Full laps per trail on this ride, most laps first: [{trail, trail_name, laps, clean_laps}]."""

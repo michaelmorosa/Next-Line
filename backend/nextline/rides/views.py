@@ -5,6 +5,7 @@ from rest_framework.decorators import action, api_view, throttle_classes
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
+from progression import ride_xp
 from trails.models import FeatureProgress, FeatureStatus
 
 from . import achievements, level_guide, scoring
@@ -44,9 +45,16 @@ class RideViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Destr
         except IntegrityError:
             ride = Ride.objects.get(user=request.user, client_id=data['client_id'])
             return Response(self._detail(ride.pk), status=status.HTTP_200_OK)
+        ride_xp.award_ride(ride)
         body = self._detail(ride.pk)
         body['new_achievements'] = achievements.describe(achievements.award(request.user))
         return Response(body, status=status.HTTP_201_CREATED)
+
+    def perform_destroy(self, instance):
+        # The ledger is append-only, so deleting a ride adds corrections for what it earned.
+        with transaction.atomic():
+            ride_xp.undo_ride(instance)
+            instance.delete()
 
     def _detail(self, pk):
         ride = RideListSerializer.annotate(Ride.objects.filter(pk=pk)).get()
@@ -72,6 +80,7 @@ class RideViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Destr
                     progress.save()
             ride.checked_in_at = timezone.now()
             ride.save()
+        ride_xp.award_features(request.user)
         body = self._detail(ride.pk)
         body['new_achievements'] = achievements.describe(achievements.award(request.user))
         return Response(body)
@@ -119,7 +128,7 @@ def crash_alert(request):
 @api_view(['GET'])
 def progress(request):
     data = scoring.progress(request.user)
-    data['suggestions'] = level_guide.suggestions(request.user, data['level'])
+    data['suggestions'] = level_guide.suggestions(request.user)
     return Response(data)
 
 

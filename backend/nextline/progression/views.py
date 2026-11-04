@@ -15,13 +15,14 @@ from trails.serializers import FeatureSerializer, progress_for
 from trails.views import features_with_counts
 
 from . import content, services, xp
-from .models import Attempt, Challenge, ChallengeEntry, Mastery, PracticeSession, XPEntry
+from .models import Attempt, Challenge, Mastery, PracticeSession, XPEntry
 from .serializers import (
     AttemptInputSerializer, AttemptSerializer, MasterInputSerializer, SessionInputSerializer, SessionSerializer,
     XPEntrySerializer,
 )
-from .services import ProgressionError, challenge_progress, is_open
+from .services import ProgressionError
 from .state import next_up, rider_skills
+from .summary import challenge_data, challenge_list
 
 NEARBY_FEATURES = 5
 NEARBY_MAX_M = 50_000
@@ -214,33 +215,6 @@ def xp_history(request):
         'next_before': page[XP_PAGE - 1].id if len(page) > XP_PAGE else None,
         **standing(request.user),
     })
-
-
-def challenge_data(challenge, entry, today):
-    by_id = content.skills_by_id()
-    return {
-        'id': challenge.id, 'slug': challenge.slug, 'title': challenge.title, 'description': challenge.description,
-        'skills': [{'id': s, 'name': by_id[s]['name']} for s in challenge.skill_ids if s in by_id],
-        'goal_type': challenge.goal_type, 'goal_count': challenge.goal_count,
-        'starts_on': challenge.starts_on, 'ends_on': challenge.ends_on,
-        'days_left': max(0, (challenge.ends_on - today).days + 1),
-        'open': is_open(challenge, today),
-        'joined': entry is not None,
-        'progress': min(challenge_progress(entry), challenge.goal_count) if entry else 0,
-        'completed_at': entry.completed_at if entry else None,
-        'xp': content.rules()['xp']['challenge_complete'],
-    }
-
-
-def challenge_list(user, today=None):
-    """Open challenges, plus ones the rider joined that are still running or that they finished."""
-    today = today or timezone.localdate()
-    entries = {e.challenge_id: e for e in ChallengeEntry.objects.filter(user=user)}
-    challenges = [
-        c for c in Challenge.objects.all()
-        if is_open(c, today) or (c.id in entries and entries[c.id].completed_at)
-    ]
-    return [challenge_data(c, entries.get(c.id), today) for c in challenges]
 
 
 @api_view(['GET'])
