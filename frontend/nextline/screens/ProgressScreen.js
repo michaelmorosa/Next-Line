@@ -59,6 +59,10 @@ export default function ProgressScreen() {
 
   if (!data && error) return <ErrorState message={error} onRetry={load} />;
   if (!data) return <Loading />;
+  // Servers older than the XP system send a level without totals.
+  if (data.level?.total == null || !data.skills) {
+    return <ErrorState message="The server needs updating for XP and skills." onRetry={load} />;
+  }
 
   const { level, totals, favorite_trail: fav, favorite_climb: favClimb } = data;
   // Missing from servers older than climb tracking.
