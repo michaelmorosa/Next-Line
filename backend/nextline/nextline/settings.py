@@ -196,6 +196,11 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "static"
 
+# Riders' attempt videos. Private: served only through /api/attempts/<id>/video/, never a public media URL.
+# In production nginx serves the file after Django checks access (USE_X_ACCEL_REDIRECT, see README).
+MEDIA_ROOT = os.getenv("MEDIA_ROOT", str(BASE_DIR / "media"))
+USE_X_ACCEL_REDIRECT = env_bool("USE_X_ACCEL_REDIRECT")
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"

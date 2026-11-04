@@ -15,6 +15,7 @@ __pycache__/
 # Local databases and collected static files
 *.sqlite3
 backend/nextline/static/
+backend/nextline/media/
 
 # Node / Expo
 node_modules/
