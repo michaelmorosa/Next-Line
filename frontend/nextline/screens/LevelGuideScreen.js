@@ -1,14 +1,15 @@
-// "How rider level works": the rules (from the server, so they always match the scoring), where your points come
-// from, and concrete ways to level up next.
+// "How rider level works": the XP rules (from the server, so they always match rules.json), where your XP came from,
+// the levels and titles, and concrete ways to earn more next.
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchJson } from '../api';
 import { useAuth } from '../AuthContext';
+import LevelBar from '../components/LevelBar';
 import SuggestionRow from '../components/SuggestionRow';
-import { ErrorState, Header, Loading, ProgressBar } from '../components/ui';
-import { DIFFICULTY, colors, fonts, ui } from '../theme';
+import { ErrorState, Header, Loading } from '../components/ui';
+import { DIFFICULTY, colors, ui } from '../theme';
 
 export default function LevelGuideScreen() {
   const { logout } = useAuth();
@@ -35,9 +36,7 @@ export default function LevelGuideScreen() {
   if (!rules || !progress) return <Loading />;
 
   const { level } = progress;
-  const tierIndex = rules.tiers.findIndex((t) => t.name === level.tier);
-  const next = rules.tiers[tierIndex + 1];
-  const requirements = level.requirements || [];
+  const earned = Object.fromEntries(progress.xp_by_reason.map((r) => [r.reason, r.xp]));
   const suggestions = progress.suggestions || [];
 
   return (
@@ -45,50 +44,28 @@ export default function LevelGuideScreen() {
       <Header caption="Rider level" />
       <Text style={ui.title}>How it works</Text>
       <Text style={ui.subtitle}>
-        Your rider level is one number that only goes up. It's built from your bests and totals, so a bad day never
-        costs you anything.
+        Your rider level comes from XP. Most XP is for practising skills and mastering them, so you feel progress during
+        the weeks a hard skill takes. Riding earns some too, with daily caps: getting better counts more than riding more.
       </Text>
 
       <View style={ui.cardRaised}>
-        <View style={ui.between}>
-          <Text style={ui.label}>You</Text>
-          <Text style={ui.strong}>{level.tier}</Text>
-        </View>
-        <Text style={styles.points}>{level.points.toLocaleString()} points</Text>
-        {next && (
-          <>
-            <ProgressBar fraction={next.points ? Math.min(1, level.points / next.points) : 1} />
-            <Text style={ui.small}>
-              {level.to_next > 0
-                ? `${level.to_next.toLocaleString()} points to ${next.name}`
-                : `You have the points for ${next.name}`}
-            </Text>
-            {requirements.map((r) => (
-              <View key={r.kind} style={[ui.row, { gap: 8 }]}>
-                <Ionicons name={r.met ? 'checkmark-circle' : 'ellipse-outline'} size={16}
-                  color={r.met ? colors.good : colors.warn} />
-                <Text style={[ui.small, { flex: 1, color: r.met ? colors.muted : colors.text }]}>{r.label}</Text>
-                <Text style={ui.small}>{r.have}/{r.needed}</Text>
-              </View>
-            ))}
-          </>
-        )}
+        <LevelBar level={level} streakWeeks={progress.practice_streak_weeks} />
       </View>
 
       {suggestions.length > 0 && (
         <View style={ui.card}>
-          <Text style={ui.label}>Ways to level up</Text>
+          <Text style={ui.label}>On the trail</Text>
           {suggestions.map((s) => <SuggestionRow key={`${s.kind}-${s.title}`} suggestion={s} />)}
         </View>
       )}
 
       <View style={ui.card}>
-        <Text style={ui.label}>Where points come from</Text>
+        <Text style={ui.label}>Where XP comes from</Text>
         {rules.sources.map((s) => (
           <View key={s.key} style={{ gap: 2 }}>
             <View style={ui.between}>
               <Text style={ui.strong}>{s.label}</Text>
-              <Text style={[ui.strong, { color: colors.accent }]}>{level.parts[s.key] ?? 0}</Text>
+              <Text style={[ui.strong, { color: colors.accent }]}>{(earned[s.key] ?? 0).toLocaleString()}</Text>
             </View>
             <Text style={ui.small}>{s.how}</Text>
           </View>
@@ -96,7 +73,7 @@ export default function LevelGuideScreen() {
       </View>
 
       <View style={ui.card}>
-        <Text style={ui.label}>Trail difficulty multiplies points</Text>
+        <Text style={ui.label}>Trail difficulty multiplies feature and climb XP</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {rules.difficulty_weights.map((d) => (
             <View key={d.difficulty} style={styles.weight}>
@@ -107,28 +84,24 @@ export default function LevelGuideScreen() {
         </View>
         <Text style={ui.small}>
           Trails you discover are rated by you, so they count as {rules.rider_rated_max} at most. Shared trails, rated
-          by Next Line, count in full: the harder the trail, the more each feature and fast run is worth.
+          by Next Line, count in full.
         </Text>
       </View>
 
       <View style={ui.card}>
-        <Text style={ui.label}>Tiers</Text>
-        <Text style={ui.small}>
-          Levels take seasons, not weeks. Points get you close to a tier; from Intermediate up you also need
-          features cleaned and trails mastered on harder trails, and active weeks (weeks you rode at all). Points
-          alone won't get you there.
-        </Text>
-        {rules.tiers.map((t, i) => {
-          const reached = i <= tierIndex;
+        <Text style={ui.label}>Levels</Text>
+        {rules.levels.map((l) => {
+          const reached = l.level <= level.level;
+          const newTitle = l.level === 1 || rules.levels[l.level - 2].title !== l.title;
           return (
-            <View key={t.name} style={[ui.row, { gap: 10 }]}>
-              <Ionicons name={reached ? 'checkmark-circle' : 'ellipse-outline'} size={20}
-                color={reached ? colors.good : colors.muted} />
-              <View style={{ flex: 1 }}>
-                <Text style={[ui.strong, !reached && { color: colors.muted }]}>{t.name}</Text>
-                {t.requirements.length > 0 && <Text style={ui.small}>{t.requirements.join(' · ')}</Text>}
-              </View>
-              <Text style={[ui.body, { color: reached ? colors.text : colors.muted }]}>{t.points.toLocaleString()}</Text>
+            <View key={l.level} style={[ui.row, { gap: 10 }]}>
+              <Ionicons name={reached ? 'checkmark-circle' : 'ellipse-outline'} size={18}
+                color={l.level === level.level ? colors.accent : reached ? colors.good : colors.muted} />
+              <Text style={[ui.strong, { width: 64 }, !reached && { color: colors.muted }]}>Level {l.level}</Text>
+              <Text style={[ui.body, { flex: 1, color: newTitle ? colors.text : colors.muted }]}>
+                {newTitle ? l.title : ''}
+              </Text>
+              <Text style={[ui.small, reached && { color: colors.text }]}>{l.xp.toLocaleString()} XP</Text>
             </View>
           );
         })}
@@ -136,18 +109,16 @@ export default function LevelGuideScreen() {
 
       <View style={ui.card}>
         <Text style={ui.label}>Good to know</Text>
-        <Text style={ui.small}>• After every ride, the summary shows the points it earned and why.</Text>
-        <Text style={ui.small}>• Mark features you cleaned in the 10-second check-in: it's the biggest source of points.</Text>
-        <Text style={ui.small}>• Achievements are separate milestones. They don't add points, but they mark firsts.</Text>
-        <Text style={ui.small}>• A trail is mastered when you've cleaned every one of its features (at least 3).</Text>
-        <Text style={ui.small}>• Flow and climbing stamina are trends for you to follow; only your bests feed the level.</Text>
+        <Text style={ui.small}>• XP never goes down, except when you delete a ride: what it earned is taken back.</Text>
+        <Text style={ui.small}>• Logged sessions over the daily cap still count toward mastery; they just don't earn XP.</Text>
+        <Text style={ui.small}>• Achievements are separate milestones. They don't add XP, but they mark firsts.</Text>
+        <Text style={ui.small}>• Flow and climbing stamina are trends for you to follow; they don't feed the level.</Text>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  points: { fontFamily: fonts.display, fontSize: 40, lineHeight: 44, color: colors.text },
   weight: {
     flexGrow: 1, minWidth: '22%', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.border,
     alignItems: 'center',

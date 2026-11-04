@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from './AuthContext';
 import ScreenContainer from './ScreenContainer';
+import ChallengesScreen from './screens/ChallengesScreen';
 import LevelGuideScreen from './screens/LevelGuideScreen';
 import LoginScreen from './screens/LoginScreen';
 import MasteryScreen from './screens/MasteryScreen';
@@ -16,6 +17,7 @@ import SkillScreen from './screens/SkillScreen';
 import SkillTreeScreen from './screens/SkillTreeScreen';
 import TrailScreen from './screens/TrailScreen';
 import TrailsScreen from './screens/TrailsScreen';
+import XPHistoryScreen from './screens/XPHistoryScreen';
 import { colors } from './theme';
 
 const Stack = createNativeStackNavigator();
@@ -28,6 +30,8 @@ const APP_SCREENS = [
   { name: 'Skills', component: SkillTreeScreen },
   { name: 'Progress', component: ProgressScreen },
   { name: 'LevelGuide', component: LevelGuideScreen },
+  { name: 'XPHistory', component: XPHistoryScreen },
+  { name: 'Challenges', component: ChallengesScreen },
   { name: 'RideSummary', component: RideSummaryScreen },
   { name: 'Trail', component: TrailScreen },
   { name: 'PinFeature', component: PinFeatureScreen },

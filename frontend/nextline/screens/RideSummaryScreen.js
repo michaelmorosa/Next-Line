@@ -7,11 +7,9 @@ import { announceAchievements } from '../utils/achievements';
 import { useAuth } from '../AuthContext';
 import FlowRing from '../components/FlowRing';
 import RideMap from '../components/RideMap';
-import { Button, CircleButton, ErrorState, Grid, Header, Loading, StatTile } from '../components/ui';
-import { climbRate, day, delta, duration, feetDown, km, metres, seconds, shortDuration } from '../utils/format';
+import { Button, CircleButton, ErrorState, Grid, Header, Loading, ProgressBar, StatTile } from '../components/ui';
+import { climbRate, day, delta, duration, feetDown, km, metres, seconds, shortDuration, xp } from '../utils/format';
 import { colors, fonts, ui } from '../theme';
-
-const LEVEL_PART_NAMES = { features: 'features', speed: 'speed', air: 'air', descent: 'descending', climbing: 'climbing' };
 
 const NEXT_STATUS = { locked: 'almost', almost: 'cleaned', cleaned: 'locked' };
 const STATUS_STYLE = {
@@ -141,9 +139,7 @@ export default function RideSummaryScreen() {
   const trailNames = Object.fromEntries(ride.efforts.map((e) => [e.trail, e.trail_name]));
   const lapLabels = lapNumbers(ride.efforts);
   const descentLaps = ride.efforts.filter((e) => e.trail_direction === 'descent').length;
-  const gain = ride.level_gain;
-  const gainParts = gain ? Object.entries(gain.parts).filter(([, v]) => v > 0)
-    .map(([k, v]) => `+${v} ${LEVEL_PART_NAMES[k] || k}`) : [];
+  const gain = ride.xp;
   const setTouchdowns = (n) => setCheckin((c) => ({ ...c, touchdowns: Math.max(0, n) }));
 
   return (
@@ -200,21 +196,28 @@ export default function RideSummaryScreen() {
       {gain && (
         <TouchableOpacity style={ui.cardRaised} onPress={() => navigation.navigate('LevelGuide')}>
           <View style={ui.between}>
-            <Text style={ui.label}>Rider level</Text>
-            <Text style={[ui.number, { fontSize: 28, color: gain.points > 0 ? colors.good : colors.muted }]}>
-              +{gain.points}
+            <Text style={ui.label}>XP earned</Text>
+            <Text style={[ui.number, { fontSize: 28, color: gain.xp > 0 ? colors.good : colors.muted }]}>
+              {xp(gain.xp)}
             </Text>
           </View>
-          {gain.tier_after !== gain.tier_before && (
-            <Text style={[ui.strong, { color: colors.accent }]}>New tier: {gain.tier_after}</Text>
+          {gain.leveled_up && (
+            <Text style={[ui.strong, { color: colors.accent }]}>Level up! Level {gain.level.level} · {gain.level.title}</Text>
           )}
-          {gainParts.length > 0 && <Text style={ui.small}>{gainParts.join(' · ')}</Text>}
-          {gain.highlights.map((h) => <Text key={h} style={ui.body}>• {h}</Text>)}
-          {gain.points === 0 && (
-            <Text style={ui.small}>
-              No new bests this time. Mark features you cleaned below; it's the biggest source of points.
-            </Text>
-          )}
+          {gain.items.map((i) => (
+            <View key={i.label} style={ui.between}>
+              <Text style={ui.body}>{i.label}</Text>
+              <Text style={ui.small}>{xp(i.amount)}</Text>
+            </View>
+          ))}
+          <ProgressBar fraction={gain.level.fraction} />
+          <Text style={ui.small}>
+            Level {gain.level.level} · {gain.level.title}
+            {gain.level.to_next != null ? ` · ${gain.level.to_next.toLocaleString()} XP to level ${gain.level.level + 1}` : ''}
+          </Text>
+          <Text style={ui.small}>
+            Mark features you cleaned below for more. Skills you practise earn the most: see the Skills tab.
+          </Text>
           <Text style={[ui.small, { color: colors.accent }]}>How rider level works ›</Text>
         </TouchableOpacity>
       )}

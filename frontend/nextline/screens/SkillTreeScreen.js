@@ -7,27 +7,10 @@ import Svg, { Path } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchJson } from '../api';
 import { useAuth } from '../AuthContext';
-import { ErrorState, Header, Loading, ProgressBar } from '../components/ui';
+import LevelBar from '../components/LevelBar';
+import { ErrorState, Header, Loading } from '../components/ui';
 import { NODE_H, NODE_W, layoutTree, nodeCaption, scrollTargetFor } from '../utils/skillTree';
 import { SKILL_STATE, colors, fonts, ui } from '../theme';
-
-export function LevelBar({ level, streakWeeks }) {
-  return (
-    <View style={{ gap: 6 }}>
-      <View style={ui.between}>
-        <Text style={ui.strong}>Level {level.level} · {level.title}</Text>
-        <Text style={ui.small}>{level.total.toLocaleString()} XP</Text>
-      </View>
-      <ProgressBar fraction={level.fraction} />
-      <View style={ui.between}>
-        <Text style={ui.small}>
-          {level.to_next == null ? 'Top level' : `${level.to_next.toLocaleString()} XP to level ${level.level + 1}`}
-        </Text>
-        {streakWeeks > 0 && <Text style={[ui.small, { color: colors.accent }]}>🔥 {streakWeeks}-week streak</Text>}
-      </View>
-    </View>
-  );
-}
 
 function SkillNode({ skill, node, highlighted, onPress }) {
   const s = SKILL_STATE[skill.state];

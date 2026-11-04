@@ -6,17 +6,15 @@ import { fetchJson } from '../api';
 import { useAuth } from '../AuthContext';
 import Sparkline from '../components/Sparkline';
 import SuggestionRow from '../components/SuggestionRow';
-import { ErrorState, Grid, Loading, StatTile } from '../components/ui';
+import XPRow from '../components/XPRow';
+import { ErrorState, Grid, Loading, ProgressBar, StatTile } from '../components/ui';
 import { climbRate, delta, duration } from '../utils/format';
-import { colors, fonts, ui } from '../theme';
+import { SKILL_STATE, colors, fonts, ui } from '../theme';
 
 // Achievements earned this recently get a NEW tag.
 const NEW_ACHIEVEMENT_MS = 7 * 86400000;
 
-// Where rider level points come from, in the order shown under the level.
-const LEVEL_PARTS = [
-  ['features', 'Features'], ['speed', 'Speed'], ['air', 'Air'], ['descent', 'Descending'], ['climbing', 'Climbing'],
-];
+const XP_SHOWN = 5;
 
 // Weekly bars for one value of `weeks` (latest week highlighted). Empty weeks get a stub.
 function WeekBars({ weeks, field = 'flow' }) {
@@ -83,36 +81,86 @@ export default function ProgressScreen() {
 
       <TouchableOpacity style={[ui.cardRaised, { padding: 18 }]} onPress={() => navigation.navigate('LevelGuide')}>
         <View style={ui.between}>
-          <View style={{ gap: 4 }}>
+          <View style={{ gap: 2 }}>
             <Text style={ui.label}>Rider level</Text>
-            <Text style={styles.level}>{level.points.toLocaleString()}</Text>
-            <Text style={[ui.body, { fontSize: 14, color: level.gain_30d > 0 ? colors.good : colors.muted }]}>
-              {level.gain_30d > 0 ? `+${level.gain_30d} in the last 30 days` : 'Ride to level up'}
-            </Text>
+            <Text style={styles.level}>{level.level}</Text>
           </View>
           <View style={{ alignItems: 'flex-end', gap: 4, flexShrink: 1 }}>
-            <Text style={ui.strong}>{level.tier}</Text>
-            {level.tier_number && <Text style={ui.small}>Tier {level.tier_number} of {level.tier_count}</Text>}
-            {level.next_tier && (
-              <Text style={ui.small}>
-                {level.to_next > 0
-                  ? `${level.to_next.toLocaleString()} to ${level.next_tier}`
-                  : `Points ready for ${level.next_tier}`}
-              </Text>
-            )}
-            {(level.requirements || []).filter((r) => !r.met).map((r) => (
-              <Text key={r.kind} style={[ui.small, { color: colors.warn, textAlign: 'right' }]}>
-                {r.have}/{r.needed} · {r.label}
-              </Text>
-            ))}
+            <Text style={[ui.strong, { fontSize: 18, color: colors.accent }]}>{level.title}</Text>
+            <Text style={ui.small}>{level.total.toLocaleString()} XP</Text>
+            <Text style={[ui.small, { color: level.gain_30d > 0 ? colors.good : colors.muted }]}>
+              {level.gain_30d > 0 ? `+${level.gain_30d.toLocaleString()} in 30 days` : 'Practise to level up'}
+            </Text>
           </View>
         </View>
+        <ProgressBar fraction={level.fraction} />
         <Text style={ui.small}>
-          {LEVEL_PARTS.filter(([key]) => level.parts[key] != null)
-            .map(([key, label]) => `${label} ${level.parts[key]}`).join(' · ')}
+          {level.to_next == null
+            ? 'Top level'
+            : `${level.to_next.toLocaleString()} XP to level ${level.level + 1}${level.next_title !== level.title ? ` · ${level.next_title}` : ''}`}
         </Text>
         <Text style={[ui.small, { color: colors.accent }]}>How rider level works ›</Text>
       </TouchableOpacity>
+
+      <Grid columns={3}>
+        <StatTile value={`${data.practice_streak_weeks} wk`} sub="practice streak" center small />
+        <StatTile value={`${data.skills.mastered}/${data.skills.total}`} sub="skills mastered" center small />
+        <StatTile value={data.skills.in_progress} sub="in progress" center small />
+      </Grid>
+
+      {data.skills.next_up.length > 0 && (
+        <View style={ui.card}>
+          <View style={ui.between}>
+            <Text style={ui.label}>Next up</Text>
+            <Text style={[ui.small, { color: colors.accent }]} onPress={() => navigation.navigate('Skills')}>Skill tree ›</Text>
+          </View>
+          {data.skills.next_up.map((s) => (
+            <TouchableOpacity key={s.id} style={[ui.row, { alignItems: 'flex-start' }]}
+              onPress={() => navigation.navigate('Skill', { id: s.id })}>
+              <Ionicons name={SKILL_STATE[s.state].icon} size={18} color={colors.accent} style={{ marginTop: 2 }} />
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={ui.strong}>{s.name}</Text>
+                <Text style={ui.small}>
+                  {s.state === 'in_progress'
+                    ? (s.missing.length ? `Needs ${s.missing.join(', ')}` : 'Ready for the mastery test')
+                    : `Tier ${s.tier} · ready to learn`}
+                </Text>
+              </View>
+              <Text style={{ fontFamily: fonts.semibold, fontSize: 14, color: colors.good }}>+{s.xp} XP</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {data.challenges.length > 0 && (
+        <TouchableOpacity style={ui.card} onPress={() => navigation.navigate('Challenges')}>
+          <View style={ui.between}>
+            <Text style={ui.label}>Challenges</Text>
+            <Text style={[ui.small, { color: colors.accent }]}>All ›</Text>
+          </View>
+          {data.challenges.slice(0, 2).map((c) => (
+            <View key={c.id} style={{ gap: 6 }}>
+              <View style={ui.between}>
+                <Text style={ui.strong}>{c.title}</Text>
+                <Text style={ui.small}>
+                  {c.completed_at ? 'Done ✓' : c.joined ? `${c.progress}/${c.goal_count}` : `${c.days_left} days left`}
+                </Text>
+              </View>
+              {c.joined && <ProgressBar fraction={c.progress / c.goal_count} color={c.completed_at ? colors.good : colors.accent} />}
+            </View>
+          ))}
+        </TouchableOpacity>
+      )}
+
+      {data.recent_xp.length > 0 && (
+        <View style={ui.card}>
+          <View style={ui.between}>
+            <Text style={ui.label}>Recent XP</Text>
+            <Text style={[ui.small, { color: colors.accent }]} onPress={() => navigation.navigate('XPHistory')}>History ›</Text>
+          </View>
+          {data.recent_xp.slice(0, XP_SHOWN).map((e) => <XPRow key={e.id} entry={e} />)}
+        </View>
+      )}
 
       {suggestions.length > 0 && (
         <View style={ui.card}>

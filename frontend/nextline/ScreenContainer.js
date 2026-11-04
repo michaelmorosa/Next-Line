@@ -19,7 +19,7 @@ const TAB_FOR_ROUTE = {
   Record: 'Record',
   Trails: 'Trails', Trail: 'Trails', PinFeature: 'Trails',
   Skills: 'Skills', Skill: 'Skills', Mastery: 'Skills',
-  Progress: 'Progress', LevelGuide: 'Progress',
+  Progress: 'Progress', LevelGuide: 'Progress', XPHistory: 'Progress', Challenges: 'Progress',
 };
 
 function TabBar() {
