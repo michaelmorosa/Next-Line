@@ -144,9 +144,46 @@ def join_challenge(user, challenge, today=None):
     return entry
 
 
+def challenge_features(challenge):
+    """The certified features a 'features' goal covers."""
+    from trails.models import Certification, Feature
+
+    features = Feature.objects.filter(status=Certification.CERTIFIED, trail__owner__isnull=True, grade__isnull=False)
+    if challenge.system_id:
+        features = features.filter(trail__system=challenge.system_id)
+    if challenge.feature_type:
+        features = features.filter(type=challenge.feature_type)
+    if challenge.grade_min:
+        features = features.filter(grade__gte=challenge.grade_min)
+    if challenge.grade_max:
+        features = features.filter(grade__lte=challenge.grade_max)
+    return features
+
+
+def challenge_goal(challenge):
+    if challenge.goal_type == GoalType.FEATURES:
+        return max(1, challenge_features(challenge).count())
+    return challenge.goal_count
+
+
 def challenge_progress(entry):
     """How far the rider is toward the goal. Only counts what happened after joining and inside the dates."""
+    from django.db.models import Min
+
+    from trails.models import FeatureLog, Outcome
+
     challenge = entry.challenge
+    if challenge.goal_type in (GoalType.NEXT_FEATURES, GoalType.FEATURES):
+        cleans = FeatureLog.objects.filter(user=entry.user, outcome=Outcome.CLEANED)
+        in_window = cleans.filter(
+            logged_at__gte=entry.joined_at, ridden_on__gte=challenge.starts_on, ridden_on__lte=challenge.ends_on,
+        )
+        if challenge.goal_type == GoalType.FEATURES:
+            return in_window.filter(feature__in=challenge_features(challenge)).values('feature').distinct().count()
+        # Next features: ones whose first clean ever came during the challenge.
+        firsts = cleans.values('feature').annotate(first=Min('logged_at'))
+        new = {row['feature'] for row in firsts if row['first'] >= entry.joined_at}
+        return in_window.filter(feature__in=new).values('feature').distinct().count()
     if challenge.goal_type == GoalType.SESSIONS:
         return PracticeSession.objects.filter(
             user=entry.user, skill_id__in=challenge.skill_ids, logged_at__gte=entry.joined_at,
@@ -162,7 +199,7 @@ def check_challenges(user, at=None):
     """Complete any joined challenge whose goal is now met. Returns [{entry, award}] for the ones just completed."""
     done = []
     for entry in ChallengeEntry.objects.filter(user=user, completed_at__isnull=True).select_related('challenge'):
-        if challenge_progress(entry) < entry.challenge.goal_count:
+        if challenge_progress(entry) < challenge_goal(entry.challenge):
             continue
         entry.completed_at = at or timezone.now()
         entry.save(update_fields=['completed_at'])
@@ -182,10 +219,15 @@ def seed_challenges(today=None):
             date.fromisoformat(c['starts_on']) if c.get('starts_on')
             else existing.starts_on if existing else today
         )
+        system = None
+        if c.get('system'):
+            from trails.models import TrailSystem
+            system = TrailSystem.objects.filter(slug=c['system']).first()
         challenge, _ = Challenge.objects.update_or_create(slug=c['slug'], defaults={
-            'title': c['title'], 'description': c.get('description', ''), 'skill_ids': c['skills'],
+            'title': c['title'], 'description': c.get('description', ''), 'skill_ids': c.get('skills', []),
             'goal_type': c['goal_type'], 'goal_count': c['goal_count'], 'starts_on': starts,
-            'ends_on': starts + timedelta(days=c['days'] - 1),
+            'ends_on': starts + timedelta(days=c['days'] - 1), 'system': system,
+            'feature_type': c.get('feature_type', ''), 'grade_min': c.get('grade_min'), 'grade_max': c.get('grade_max'),
         })
         out.append(challenge)
     return out

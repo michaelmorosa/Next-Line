@@ -38,12 +38,17 @@ export default function LogTrailScreen() {
         navigation.goBack();
         return;
       }
-      const firsts = result.logs.filter((l) => l.first_clean).map((l) => l.feature_name);
+      const firsts = result.logs.filter((l) => l.first_clean);
       const lines = [result.points ? `${points(result.points)} for this trail.` : 'Logged. Every go counts.'];
-      if (firsts.length) lines.push(`First clean${firsts.length > 1 ? 's' : ''}: ${firsts.join(', ')}`);
+      if (firsts.length) lines.push(`First clean${firsts.length > 1 ? 's' : ''}: ${firsts.map((l) => l.feature_name).join(', ')}`);
       if (result.leveled_up) lines.push(`Level up! Level ${result.level.level} · ${result.level.title}`);
       Alert.alert('Logged', lines.join('\n'), [{ text: 'OK', onPress: () => announceAchievements(result.new_achievements) }]);
-      navigation.goBack();
+      if (firsts.length) {
+        // A share card for the first of them.
+        navigation.replace('ShareCard', { logId: firsts[0].id, featureName: firsts[0].feature_name });
+      } else {
+        navigation.goBack();
+      }
     } catch (err) {
       Alert.alert("Couldn't save", err.message);
     } finally {

@@ -80,6 +80,9 @@ class Mastery(models.Model):
 
 
 class GoalType(models.TextChoices):
+    NEXT_FEATURES = 'next_features', "Clean features you hadn't cleaned before"
+    FEATURES = 'features', 'Clean every matching feature'
+    # Skill goals, from before trail features. Kept for old challenges; not used for new ones.
     SESSIONS = 'sessions', 'Log sessions'
     MASTER = 'master', 'Master skills'
 
@@ -89,9 +92,15 @@ class Challenge(models.Model):
     slug = models.SlugField(unique=True)
     title = models.CharField(max_length=80)
     description = models.TextField(blank=True)
-    skill_ids = models.JSONField(default=list)
-    goal_type = models.CharField(max_length=10, choices=GoalType.choices)
+    skill_ids = models.JSONField(default=list, blank=True)
+    goal_type = models.CharField(max_length=20, choices=GoalType.choices)
+    # For 'features' goals the count is however many features match, worked out when progress is checked.
     goal_count = models.PositiveIntegerField()
+    # Which features a 'features' goal covers. Empty means any.
+    system = models.ForeignKey('trails.TrailSystem', null=True, blank=True, on_delete=models.SET_NULL)
+    feature_type = models.CharField(max_length=20, blank=True)
+    grade_min = models.PositiveSmallIntegerField(null=True, blank=True)
+    grade_max = models.PositiveSmallIntegerField(null=True, blank=True)
     starts_on = models.DateField()
     ends_on = models.DateField()  # inclusive
 

@@ -123,6 +123,15 @@ def _correct(entry):
                     feature_id=entry.feature_id, log_id=entry.log_id)
 
 
+def log_created(log):
+    """Everything that follows a new log: its points, then any challenge it completes."""
+    from .services import check_challenges
+
+    awards = award_log(log)
+    check_challenges(log.user)
+    return awards
+
+
 def delete_log(log):
     """Delete a rider's log, correcting its points first."""
     undo_log(log)

@@ -17,6 +17,7 @@ import RideSummaryScreen from './screens/RideSummaryScreen';
 import RidesScreen from './screens/RidesScreen';
 import SafetyScreen from './screens/SafetyScreen';
 import SensorLabScreen from './screens/SensorLabScreen';
+import ShareCardScreen from './screens/ShareCardScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import SystemScreen from './screens/SystemScreen';
 import TeamFeatureScreen from './screens/TeamFeatureScreen';
@@ -42,6 +43,7 @@ const APP_SCREENS = [
   { name: 'Feature', component: FeatureScreen },
   { name: 'LogTrail', component: LogTrailScreen },
   { name: 'Ladders', component: LaddersScreen },
+  { name: 'ShareCard', component: ShareCardScreen },
   { name: 'Safety', component: SafetyScreen },
   { name: 'TimedTrails', component: TrailsScreen },
   { name: 'Trail', component: TrailScreen },

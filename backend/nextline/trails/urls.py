@@ -11,6 +11,7 @@ urlpatterns = [
     path('features/<int:pk>/log/', rider.log_feature, name='feature-log'),
     path('logs/batch/', rider.log_batch, name='log-batch'),
     path('logs/<int:pk>/', rider.log_detail, name='log'),
+    path('logs/<int:pk>/share-card/', rider.share_card, name='log-share-card'),
     path('next-up/', rider.next_up, name='next-up'),
     path('safety/', rider.safety, name='safety'),
     path('team/me/', team.me, name='team-me'),

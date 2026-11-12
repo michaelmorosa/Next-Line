@@ -90,7 +90,7 @@ def log_feature(user, feature_id, ride, outcome):
         user=user, feature=feature, ride=ride, outcome=outcome, ridden_on=timezone.localdate(ride.started_at),
         logged_at=ride.started_at, grade_at_log=feature.grade,
     )
-    feature_points.award_log(log)
+    feature_points.log_created(log)
     return log
 
 

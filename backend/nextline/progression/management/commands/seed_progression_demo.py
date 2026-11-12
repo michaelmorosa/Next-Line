@@ -104,7 +104,10 @@ class Command(BaseCommand):
                 services.master_skill(user, skill, confirmed_test=True, at=at(week(2, SAT), 19))
 
             # Last week and this week: the manual challenge (6 of 10) and flat corners started.
-            challenge = Challenge.objects.get(slug='30-day-manual')
+            challenge, _ = Challenge.objects.update_or_create(slug='demo-manual', defaults={
+                'title': '30-day manual challenge', 'skill_ids': ['manual'], 'goal_type': 'sessions', 'goal_count': 10,
+                'starts_on': week(2, MON), 'ends_on': week(2, MON) + timedelta(days=29),
+            })
             entry = services.join_challenge(user, challenge, today=max(challenge.starts_on, week(1, MON)))
             entry.joined_at = at(max(challenge.starts_on, week(1, MON)), 7)
             entry.save(update_fields=['joined_at'])

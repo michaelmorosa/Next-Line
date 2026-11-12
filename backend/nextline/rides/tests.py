@@ -418,7 +418,7 @@ class ProgressTests(TestCase):
         self.assertEqual(level['title'], 'PQ Punk')
         self.assertEqual(res.data['skills']['total'], 50)
         self.assertEqual(len(res.data['skills']['next_up']), 3)
-        self.assertTrue(res.data['next_milestone'].startswith(f"{level['to_next']:,} XP to level 2"))
+        self.assertTrue(res.data['next_milestone'].startswith(f"{level['to_next']:,} points to level 2"))
         favorite = res.data['favorite_trail']
         self.assertEqual(len(favorite['efforts']), 3)
         self.assertLess(favorite['best_s'], favorite['first_s'])

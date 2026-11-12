@@ -66,7 +66,9 @@ export default function ChallengesScreen() {
           <Text style={ui.small}>
             {dateOnly(c.starts_on)} – {dateOnly(c.ends_on)}{c.open ? ` · ${c.days_left} day${c.days_left === 1 ? '' : 's'} left` : ''}
           </Text>
-          {c.joined ? (
+          {c.upcoming ? (
+            <Text style={[ui.strong, { color: colors.accent }]}>Starts {dateOnly(c.starts_on)}</Text>
+          ) : c.joined ? (
             <>
               <ProgressBar fraction={c.progress / c.goal_count} color={c.completed_at ? colors.good : colors.accent} />
               <Text style={[ui.strong, c.completed_at && { color: colors.good }]}>

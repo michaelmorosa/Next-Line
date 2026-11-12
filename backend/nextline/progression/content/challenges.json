@@ -1,6 +1,15 @@
 {
-  "version": 1,
+  "version": 2,
   "challenges": [
+    {
+      "slug": "next-three-2027-01",
+      "title": "Clean your next three features",
+      "description": "Three features you haven't cleaned yet, cleaned in January. Next up shows the ones you're ready for. Sketchy goes and walk-throughs along the way are all part of it.",
+      "goal_type": "next_features",
+      "goal_count": 3,
+      "starts_on": "2027-01-01",
+      "days": 31
+    },
     {
       "slug": "30-day-manual",
       "title": "30-day manual challenge",
@@ -8,7 +17,7 @@
       "skills": ["manual"],
       "goal_type": "sessions",
       "goal_count": 10,
-      "starts_on": null,
+      "starts_on": "2026-10-01",
       "days": 30
     }
   ]

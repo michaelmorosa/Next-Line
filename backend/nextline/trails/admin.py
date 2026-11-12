@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import admin, messages
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
@@ -8,7 +9,7 @@ from django.utils.html import format_html, linebreaks
 from progression import content
 from rides.analysis import haversine
 
-from . import certification
+from . import certification, share
 from .models import (
     Certification, Feature, FeatureLog, FeatureMedia, FeatureProgress, FeatureReport, GradingGuidelines,
     ReportStatus, Trail, TrailSystem,
@@ -139,7 +140,8 @@ class FeatureAdmin(admin.ModelAdmin):
     readonly_fields = ('status', 'submitted_by', 'submitted_at', 'certified_by', 'certified_at', 'last_verified_at',
                        'created_by', 'grading_guidelines')
     inlines = [FeatureMediaInline]
-    actions = ['submit', 'certify', 'flag_changed', 'flag_closed', 'reopen', 'verify', 'merge_into_nearest']
+    actions = ['submit', 'certify', 'flag_changed', 'flag_closed', 'reopen', 'verify', 'feature_of_the_week',
+               'merge_into_nearest']
     fieldsets = (
         (None, {'fields': ('trail', 'name', 'type', 'grade', 'position', 'lat', 'lng')}),
         ('Measurements', {'fields': ('drop_height_m', 'gap_length_m', 'steepness_deg')}),
@@ -199,6 +201,16 @@ class FeatureAdmin(admin.ModelAdmin):
     @admin.action(description='Mark verified (checked, still as graded)')
     def verify(self, request, queryset):
         self._run(request, queryset, lambda f: certification.verify(f, request.user), 'Verified')
+
+    @admin.action(description='Export as feature of the week (zip: cards, photo, post text)')
+    def feature_of_the_week(self, request, queryset):
+        if queryset.count() != 1:
+            self.message_user(request, 'Pick one feature to export.', messages.WARNING)
+            return None
+        feature = queryset.select_related('trail__system').get()
+        response = HttpResponse(share.feature_of_the_week(feature, request), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="feature-of-the-week-{feature.pk}.zip"'
+        return response
 
     @admin.action(description='Duplicate: merge into the nearest other feature on the same trail')
     def merge_into_nearest(self, request, queryset):

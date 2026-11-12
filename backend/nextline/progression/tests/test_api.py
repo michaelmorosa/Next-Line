@@ -185,7 +185,11 @@ class LedgerApiTests(ApiTestCase):
 
 class ChallengeApiTests(ApiTestCase):
     def test_join_and_progress(self):
-        challenge = services.seed_challenges(self.today)[0]
+        from progression.models import Challenge
+        challenge = Challenge.objects.create(
+            slug='manual', title='30-day manual challenge', skill_ids=['manual'], goal_type='sessions', goal_count=10,
+            starts_on=self.today - timedelta(days=1), ends_on=self.today + timedelta(days=28),
+        )
         for skill in ('attack_position', 'pumping', 'wheel_lift'):
             self.master(skill)
         listing = self.client.get('/api/challenges/').data

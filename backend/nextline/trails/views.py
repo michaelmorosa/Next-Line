@@ -96,7 +96,7 @@ class FeatureViewSet(viewsets.GenericViewSet):
             for log in FeatureLog.objects.filter(user=request.user, feature=feature, ridden_on=today):
                 feature_points.delete_log(log)
         else:
-            feature_points.award_log(FeatureLog.objects.create(
+            feature_points.log_created(FeatureLog.objects.create(
                 user=request.user, feature=feature, ridden_on=today, grade_at_log=feature.grade,
                 outcome=Outcome.CLEANED if wanted == 'cleaned' else Outcome.SKETCHY,
                 note=serializer.validated_data.get('note', ''),

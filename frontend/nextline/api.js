@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { File } from 'expo-file-system';
 import { API_URL } from '@env';
 
 const REQUEST_TIMEOUT_MS = 20000;
@@ -113,4 +114,15 @@ export async function privateVideoSource(url, logout) {
   const res = await authorizedFetch(url, { method: 'HEAD' }, logout);
   if (!res.ok) throw new Error("Couldn't load the video.");
   return { uri: `${API_URL}${url}`, headers: { Authorization: `Bearer ${await AsyncStorage.getItem('access')}` } };
+}
+
+// Download a private file (a share card) to `destination` (an expo-file-system File) with the rider's token. Checks
+// the token first, refreshing it if it's expired, because the download itself can't.
+export async function downloadPrivate(url, destination, logout) {
+  const res = await authorizedFetch(url, { method: 'HEAD' }, logout);
+  if (!res.ok) throw new Error("Couldn't make the card. Try again.");
+  return File.downloadFileAsync(`${API_URL}${url}`, destination, {
+    headers: { Authorization: `Bearer ${await AsyncStorage.getItem('access')}` },
+    idempotent: true,
+  });
 }

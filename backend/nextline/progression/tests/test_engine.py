@@ -271,10 +271,18 @@ class ChallengeTests(LegacyPointsMixin, TempMediaMixin, TestCase):
         self.user = make_user()
         self.today = timezone.localdate()
 
-    def test_seed_and_complete_sessions_challenge(self):
-        challenge = services.seed_challenges(self.today)[0]
-        self.assertEqual((challenge.slug, challenge.goal_count), ('30-day-manual', 10))
-        self.assertEqual(challenge.ends_on - challenge.starts_on, timedelta(days=29))
+    def test_seed_challenges(self):
+        launch, manual = services.seed_challenges(self.today)
+        self.assertEqual((launch.slug, launch.goal_type, launch.goal_count), ('next-three-2027-01', 'next_features', 3))
+        self.assertEqual((str(launch.starts_on), str(launch.ends_on)), ('2027-01-01', '2027-01-31'))
+        self.assertEqual(manual.ends_on - manual.starts_on, timedelta(days=29))
+        self.assertFalse(services.is_open(manual, self.today))  # retired: drill challenges are hidden now
+
+    def test_complete_sessions_challenge(self):
+        challenge = Challenge.objects.create(
+            slug='manual', title='Manual', skill_ids=['manual'], goal_type='sessions', goal_count=10,
+            starts_on=self.today - timedelta(days=1), ends_on=self.today + timedelta(days=28),
+        )
         for skill in ('attack_position', 'pumping', 'wheel_lift'):
             master(self.user, skill, self.today)
         before = practise(self.user, 'manual', self.today)['session']  # before joining: doesn't count

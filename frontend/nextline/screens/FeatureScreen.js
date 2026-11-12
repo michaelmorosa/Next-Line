@@ -2,7 +2,7 @@
 // "Stuck?" tips from the skills it uses. Riders never see a skill tree; skills only appear here as tips.
 import { useCallback, useState } from 'react';
 import { Alert, Dimensions, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchJson, sendJson } from '../api';
 import { useAuth } from '../AuthContext';
@@ -62,6 +62,7 @@ function Tip({ tip }) {
 }
 
 export default function FeatureScreen() {
+  const navigation = useNavigation();
   const { params } = useRoute();
   const { logout } = useAuth();
   const [feature, setFeature] = useState(null);
@@ -91,7 +92,7 @@ export default function FeatureScreen() {
       const entry = result.logs[0];
       await load();
       if (entry.first_clean) {
-        Alert.alert('First clean!', `${feature.name} · ${points(result.points)}`);
+        navigation.navigate('ShareCard', { logId: entry.id, featureName: feature.name, points: result.points });
         announceAchievements(result.new_achievements);
       } else if (!announceAchievements(result.new_achievements)) {
         Alert.alert(outcomeLabel(outcome), result.points ? `${points(result.points)}. Logged.` : 'Logged. Every go counts.');

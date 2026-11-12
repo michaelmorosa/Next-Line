@@ -34,7 +34,8 @@ POSITIVE_KEYS = (
     ('bonuses', 'min_features'), ('next_up', 'max_suggestions'), ('next_up', 'repeat_cleans_needed'),
     ('next_up', 'advanced_above_grade'), ('verification', 'stale_after_months'),
 )
-GOAL_TYPES = ('sessions', 'master')
+GOAL_TYPES = ('next_features', 'features', 'sessions', 'master')
+SKILL_GOAL_TYPES = ('sessions', 'master')
 
 
 class ContentError(Exception):
@@ -198,7 +199,10 @@ def validate_challenges(data, skill_ids):
     slugs = set()
     for c in data.get('challenges', []):
         label = c.get('slug') or c.get('title') or 'challenge'
-        for field in ('slug', 'title', 'skills', 'goal_type', 'goal_count', 'days'):
+        required = ('slug', 'title', 'goal_type', 'goal_count', 'days')
+        if c.get('goal_type') in SKILL_GOAL_TYPES:
+            required += ('skills',)
+        for field in required:
             if not c.get(field):
                 errors.append(f'{label}: missing {field}')
         if c.get('slug') in slugs:

@@ -186,7 +186,7 @@ export default function ProgressScreen() {
               <View style={ui.between}>
                 <Text style={ui.strong}>{c.title}</Text>
                 <Text style={ui.small}>
-                  {c.completed_at ? 'Done ✓' : c.joined ? `${c.progress}/${c.goal_count}` : `${c.days_left} days left`}
+                  {c.completed_at ? 'Done ✓' : c.upcoming ? 'Coming soon' : c.joined ? `${c.progress}/${c.goal_count}` : `${c.days_left} days left`}
                 </Text>
               </View>
               {c.joined && <ProgressBar fraction={c.progress / c.goal_count} color={c.completed_at ? colors.good : colors.accent} />}

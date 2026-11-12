@@ -19,7 +19,7 @@ const TAB_FOR_ROUTE = {
   Record: 'Record',
   Trails: 'Trails', System: 'Trails', TrailFeatures: 'Trails', Feature: 'Trails', LogTrail: 'Trails',
   Ladders: 'Trails', TimedTrails: 'Trails', Trail: 'Trails', Safety: 'Trails',
-  Capture: 'Trails', TeamQueue: 'Trails', TeamFeature: 'Trails', Guidelines: 'Trails',
+  ShareCard: 'Trails', Capture: 'Trails', TeamQueue: 'Trails', TeamFeature: 'Trails', Guidelines: 'Trails',
   NextUp: 'NextUp',
   Progress: 'Progress', LevelGuide: 'Progress', XPHistory: 'Progress', Challenges: 'Progress',
 };

@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django.db import IntegrityError, transaction
 from django.db.models import Count
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import serializers, status
@@ -15,7 +16,7 @@ from progression import content, feature_points, xp
 from progression.models import XPEntry
 from rides import achievements
 
-from . import certification, ladders, skills, strengths
+from . import certification, ladders, share, skills, strengths
 from .models import (
     PHOTO_KINDS, Certification, Feature, FeatureLog, FeatureType, MediaKind, Outcome, Trail, TrailSystem,
 )
@@ -199,7 +200,7 @@ def create_log(user, feature, data):
             )
     except IntegrityError:
         return FeatureLog.objects.get(user=user, client_id=client_id), False
-    feature_points.award_log(log)
+    feature_points.log_created(log)
     return log, True
 
 
@@ -279,6 +280,25 @@ def log_detail(request, pk):
     log.note = note
     log.save(update_fields=['note'])
     return Response({'id': log.id, 'note': log.note})
+
+
+@api_view(['GET'])
+def share_card(request, pk):
+    """The share card for a clean, as a JPEG. ?size=story (1080x1920, Stories and TikTok) or feed (1080x1350)."""
+    log = get_object_or_404(FeatureLog.objects.select_related('feature__trail'), pk=pk, user=request.user)
+    if log.outcome != Outcome.CLEANED:
+        raise ValidationError('Share cards are for cleans.')
+    size = request.query_params.get('size', 'story')
+    if size not in share.SIZES:
+        raise ValidationError(f"size is one of: {', '.join(share.SIZES)}")
+    first = not FeatureLog.objects.filter(
+        user=request.user, feature=log.feature, outcome=Outcome.CLEANED,
+    ).exclude(pk=log.pk).filter(ridden_on__lt=log.ridden_on).exists()
+    image = share.render(log.feature, size, headline='First clean' if first else 'Cleaned it',
+                         rider_line=share.rider_line(xp.level(request.user)))
+    response = HttpResponse(image, content_type='image/jpeg')
+    response['Content-Disposition'] = f'inline; filename="next-line-{log.feature_id}-{size}.jpg"'
+    return response
 
 
 # Ladders and next up.
