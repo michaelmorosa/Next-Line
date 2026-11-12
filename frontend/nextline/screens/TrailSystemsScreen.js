@@ -5,15 +5,17 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchJson } from '../api';
 import { useAuth } from '../AuthContext';
-import { ErrorState, Loading, ProgressBar } from '../components/ui';
+import { Button, ErrorState, Loading, ProgressBar } from '../components/ui';
+import { captures, uploadCaptures } from '../utils/capture';
 import { progressLine } from '../utils/features';
 import { syncPendingLogs } from '../utils/logging';
 import { colors, ui } from '../theme';
 
 export default function TrailSystemsScreen() {
   const navigation = useNavigation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [systems, setSystems] = useState(null);
+  const [waiting, setWaiting] = useState(0);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -21,6 +23,11 @@ export default function TrailSystemsScreen() {
     setError(null);
     try {
       await syncPendingLogs(logout).catch(() => {});
+      if (user?.is_trail_team) {
+        // Captures from the last trip, if there's signal now.
+        await uploadCaptures(logout).catch(() => {});
+        setWaiting(await captures.count());
+      }
       setSystems(await fetchJson('/api/systems/', { logout }));
     } catch (err) {
       setError(err.message);
@@ -43,6 +50,16 @@ export default function TrailSystemsScreen() {
         <View style={{ gap: 4, marginBottom: 2 }}>
           <Text style={ui.title}>Trails</Text>
           <Text style={ui.subtitle}>Every feature here is photographed and graded by the Next Line team.</Text>
+          {user?.is_trail_team && (
+            <View style={[ui.card, { marginTop: 12 }]}>
+              <Text style={ui.label}>Trail team</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <Button title="Add a feature" icon="camera" style={{ flex: 1 }} onPress={() => navigation.navigate('Capture')} />
+                <Button title={waiting ? `Review (${waiting} to upload)` : 'Review'} variant="secondary" style={{ flex: 1 }}
+                  onPress={() => navigation.navigate('TeamQueue')} />
+              </View>
+            </View>
+          )}
         </View>
       )}
       ListEmptyComponent={(

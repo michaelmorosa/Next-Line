@@ -1,8 +1,10 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from './AuthContext';
 import ScreenContainer from './ScreenContainer';
+import CaptureFeatureScreen from './screens/CaptureFeatureScreen';
 import ChallengesScreen from './screens/ChallengesScreen';
 import FeatureScreen from './screens/FeatureScreen';
+import GuidelinesScreen from './screens/GuidelinesScreen';
 import LaddersScreen from './screens/LaddersScreen';
 import LevelGuideScreen from './screens/LevelGuideScreen';
 import LogTrailScreen from './screens/LogTrailScreen';
@@ -17,6 +19,8 @@ import SafetyScreen from './screens/SafetyScreen';
 import SensorLabScreen from './screens/SensorLabScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import SystemScreen from './screens/SystemScreen';
+import TeamFeatureScreen from './screens/TeamFeatureScreen';
+import TeamQueueScreen from './screens/TeamQueueScreen';
 import TrailFeaturesScreen from './screens/TrailFeaturesScreen';
 import TrailScreen from './screens/TrailScreen';
 import TrailSystemsScreen from './screens/TrailSystemsScreen';
@@ -47,6 +51,11 @@ const APP_SCREENS = [
   { name: 'RideSummary', component: RideSummaryScreen },
   { name: 'Settings', component: SettingsScreen },
   { name: 'SensorLab', component: SensorLabScreen },
+  // Trail team only (the entry points are hidden from riders, and the server checks).
+  { name: 'Capture', component: CaptureFeatureScreen },
+  { name: 'TeamQueue', component: TeamQueueScreen },
+  { name: 'TeamFeature', component: TeamFeatureScreen },
+  { name: 'Guidelines', component: GuidelinesScreen },
 ];
 
 const GUEST_SCREENS = [
