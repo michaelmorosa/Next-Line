@@ -45,9 +45,6 @@ class Ride(models.Model):
     crashed = models.BooleanField(default=False)
     touchdowns = models.PositiveIntegerField(null=True, blank=True)
     notes = models.TextField(blank=True)
-    # Feature ids marked cleaned in this ride's check-in. Kept so editing the check-in adjusts clean counts
-    # instead of adding to them again.
-    cleaned_features = models.JSONField(default=list, blank=True)
     checked_in_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

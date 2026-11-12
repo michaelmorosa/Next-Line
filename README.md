@@ -4,8 +4,14 @@ A mountain bike app for riders who keep their phone in a pocket. Tap Record, rid
 descents, jumps, airtime, PRs and flow, then tracks how you progress on each trail. The design is in
 `MTB Progress App.html`.
 
-- `backend/nextline`: Django REST API with PostgreSQL. Ride processing, trails, scoring and crash alerts.
-- `frontend/nextline`: React Native app with Expo (SDK 58). Recording, ride summary, trails and progress screens.
+Progress is measured on real trail features (drops, jumps, corners, rock gardens…) that the Next Line team
+photographs, grades and certifies. Riders log how each one went and get "next up when you're ready" suggestions.
+See [Trail features and progression](#trail-features-and-progression).
+
+- `backend/nextline`: Django REST API with PostgreSQL. Ride processing, trails, graded features, certification,
+  points, scoring and crash alerts.
+- `frontend/nextline`: React Native app with Expo (SDK 58). Recording, trail systems, feature pages, logging,
+  next up, progress, and the trail team's capture and review screens.
 
 ## Backend
 
@@ -44,16 +50,14 @@ All endpoints need a JWT (`Authorization: Bearer …`) except sign-up and log-in
 | Endpoint | What it does |
 |---|---|
 | `POST /api/auth/users/`, `POST /api/auth/jwt/create/`, `/jwt/refresh/` | Sign up, log in, refresh (djoser + simplejwt) |
-| `GET/PATCH /api/user/me/` | Account and crash-alert contact |
+| `GET/PATCH /api/user/me/` | Account, crash-alert contact, `advanced_features`, safety notice acceptance (`safety_version`), and whether the rider is on the trail team |
 | `POST /api/rides/` | Upload a recording: `{client_id, started_at, elapsed_s, track: [[t, lat, lng, alt, speed]], jumps: [{t, airtime_s}]}`. Repeat uploads with the same `client_id` are ignored. |
-| `GET /api/rides/`, `GET/DELETE /api/rides/{id}/` | Ride list and summary (stats, efforts, PRs, speed rank, features for check-in) |
-| `POST /api/rides/{id}/checkin/` | Confidence 1–5, crashed, and features cleaned or almost cleaned |
-| `GET /api/trails/`, `GET/PATCH /api/trails/{id}/` | Your trails with times and feature mastery. You can rename and rate auto-detected trails. |
-| `POST /api/trails/{id}/features/` | Pin a feature (it must be within 100 m of the trail) |
-| `PUT /api/features/{id}/progress/`, `DELETE /api/features/{id}/` | Set a feature to cleaned, almost or locked. Remove a pin you made. |
-| `GET /api/progress/` | Rider level (XP, title, bar), practice streak, skills mastered and next up, challenges, recent XP, trail goals worth XP, flow and climbing trends, favorite descent and climb, totals, ride streak, achievements |
-| `GET /api/level-rules/` | XP sources and caps, difficulty weights and the level/title table, for the "How rider level works" screen |
-| Skills, XP history, challenges | See [Progression](#progression-skill-tree-xp-and-levels) |
+| `GET /api/rides/`, `GET/DELETE /api/rides/{id}/` | Ride list and summary (stats, efforts, PRs, speed rank, the features on the trails ridden, points earned) |
+| `POST /api/rides/{id}/checkin/` | Confidence 1–5, crashed, touchdowns, notes. Features are logged separately. |
+| `GET /api/trails/`, `GET/PATCH /api/trails/{id}/` | Your timed trails with laps and times. You can rename and rate auto-detected trails. |
+| `GET /api/progress/` | Rider level (points, title, bar), `features` (next up, cleaned by type, strengths, recent activity), challenges, riding goals, flow and climbing trends, favorite descent and climb, totals, ride streak, achievements |
+| `GET /api/level-rules/` | Point sources and caps and the level/title table, for the "How points work" screen |
+| Trail systems, features, logging, next up, the trail team | See [API](#api-1) under Trail features |
 | `POST /api/crash-alerts/` | Text the emergency contact (Twilio; see `.env.example`) |
 
 ### How rides are scored
@@ -85,73 +89,115 @@ All endpoints need a JWT (`Authorization: Bearer …`) except sign-up and log-in
 - **Flow** is 100 × (1 − coefficient of variation of speed) on descents. It's shown as your own trend, never ranked.
 - **Jumps** are detected on the phone, because raw accelerometer data is too big to upload. The server keeps
   airtimes between 0.15 and 3 s.
-- **XP from rides** (`progression/ride_xp.py`): each ride earns a little XP. There's XP for the ride, for metres
-  descended and jumps (both capped per day), for trail PRs, a new biggest air and a first clean climb, and for
-  features cleaned in the check-in. See [Progression](#progression-skill-tree-xp-and-levels) for the values.
+- **Points from rides** (`progression/ride_xp.py`): each ride earns a few points: for the ride, for metres
+  descended and jumps (both capped per day), for trail PRs, a new biggest air and a first clean climb. Most points
+  come from features. See [Points and levels](#points-and-levels) for the values.
 - **Achievements** (`rides/achievements.py`) are one-off milestones saved with the date earned. There are 17 of
   them, such as first jump, one second of air, first black-diamond feature, mastering a trail, a clean climb,
   300 m non-stop, a 1,000 m climbing day, 10,000 m descended, 10 laps of one trail, and a 4-week streak. They're
-  awarded after uploads, check-ins and feature updates.
+  awarded after uploads, check-ins and feature logs.
 
-## Progression: skill tree, XP and levels
+## Trail features and progression
 
-The skill tree is the map: what a rider has mastered, what's ready to learn next and what's still locked. XP is
-the fuel: riders earn most of it by practising and mastering skills, so they feel progress during the weeks a hard
-skill takes. Rider level comes from total XP. The code is in `backend/nextline/progression/`.
+Progress is measured on real trail features: one specific drop, jump, corner, rock garden or steep section. The
+Next Line team photographs and grades each one. Riders log how each feature went with one tap, and the app
+suggests what to ride next. There's no skill tree in the app; skills work behind the scenes as tags, tips and
+strengths.
 
-### Skills
+- **Trail systems** group shared trails (Admin → Trail systems; set each trail's system on the trail page).
+- **Features** belong to a shared trail and have a type (drop, jump, corner, rock garden, roots, steep, skinny,
+  climb, other) and a **grade from 1 to 10 within that type**. They also have measurements, a GPS point, riding
+  order, how to ride it, what can go wrong, an optional ride-around with its own grade, skill tags, photos
+  (approach, feature, landing or exit) and a POV clip.
+- **Ladders:** every feature of one type at a trail system, in grade order. Each grade is a rung.
+- **Logs:** a rider's "cleaned it", "rode it, sketchy" or "walked it" on a feature, with a date and an optional
+  note. Clean counts, first cleans, statuses and strengths are all worked out from logs.
 
-- There are 50 skills in 9 branches (Foundations, Climbing, Cornering, Wheel lifts, Air, Drops, Technical, Speed
-  and lines, Mastery), across tiers 1–6. The longest chain is 8 skills, from Attack position to MTB Master.
-- **MTB Master** is the final skill (`"capstone": true`). It needs the last skill of every branch, so a rider can
-  only master it once they've mastered the whole tree. The validator checks this whenever the tree changes. Riders
-  who master it get the `master_title` from `rules.json` ("MTB Master") in place of their level title.
-- Each skill has:
-  - a description and why it matters
-  - 2–3 drills
-  - a mastery test ("You've got it when…")
-  - example media
-  - tags that match trail feature kinds (`drop`, `jump`, `berm`…)
-- A skill can need prerequisites from other branches. For example, Small drops needs Roll-offs **and** Manual.
-- The text is a **draft** for a coach to review. Each skill has `"draft": true`, and the app shows a Draft tag
-  until it's set to `false`.
+The code is in `backend/nextline/trails/` (features, certification, ladders, logging, share cards) and
+`backend/nextline/progression/` (points, levels, challenges).
 
-A skill is in one of four states for each rider:
-- **locked:** a prerequisite isn't mastered yet
-- **ready:** every prerequisite is mastered
-- **in progress:** at least one practice session or attempt video is logged
-- **mastered**
+### Certifying features
 
-A new rider sees the three Foundations skills as ready and everything else as locked. Locked skills can't be
-practised.
+A feature is only shown to riders once it's **certified**, and certifying takes a second person.
 
-**To master a skill**, the rider needs:
-- 3 practice sessions, on at least 2 different days
-- 1 attempt video
-- to confirm in the app that they passed the mastery test
+1. **Add it on site** (app → Trails → *Add a feature*). GPS starts when the screen opens and keeps the most
+   accurate fix; wait for ±30 m or better. Tap to take the approach, feature and landing photos, pick a type and a
+   grade, add the drop height, gap or steepness if it applies, and save. The nearest trail is used unless you pick
+   one. The draft and photos are saved on the phone first and upload when there's signal, so poor reception never
+   loses a capture. Each upload step is safe to retry. Captures the server rejects (for example, too far from any
+   trail) stay in the review queue with the reason, for you to fix or remove.
+2. **Fill in the rest later**, from the app (*Review* → the feature) or the admin (Admin → Features): how to ride
+   it, what can go wrong, the ride-around, skill tags, and the **POV clip, which you upload from a computer** in
+   the admin's media section on the feature.
+3. **Submit it for review** (app or admin action).
+4. **Certify it.** This needs a grade, at least one photo, the *certify* permission and, with
+   `verification.second_reviewer_required` on (the default, in `rules.json`), someone who neither added nor
+   submitted it. Certifying sets the verified date. Certified grades and types are locked.
+5. **Keep it current.**
+   - **Changed** (rebuilt, storm damage): riders still see it, with a "changed since we graded it" notice. It isn't
+     suggested in next up, and it can be regraded. Then submit and certify it again; the second-reviewer rule
+     applies again.
+   - **Closed:** hidden from riders. *Reopen* makes it a draft again.
+   - **Mark verified:** someone checked it and it's as graded. Features not verified in
+     `verification.stale_after_months` (12) show "Not recently verified" to riders and appear in the review queue.
+   - **Rider reports:** riders tap *Report a change* on a feature page (with an optional note). Reports go to the
+     review queue and Admin → Feature reports; they don't change the feature. Resolve or dismiss each one after
+     looking.
 
-Staff can also mark a mastery **coach verified** in the admin (Masteries → "Mark as coach verified"). That shows a
-badge, but it's never required.
+**Setting up the team.** Add people to the **Trail team** group (Admin → Users → the user → Groups). That gives
+them the team screens in the app and the permissions to add, edit and certify features. Also tick *Staff status*
+if they'll use the admin from a computer. To let someone add features but not certify them, remove the
+"Can certify features" permission from their account or make a second group without it.
 
-### XP and levels
+**Bulk trail view.** Admin → Trails → *Order and ladders* (in the trail list) shows a trail's features in riding
+order with up and down buttons, and the trail system's ladders with warnings. It warns when a grade is skipped
+("no grade 4 between 3 and 5: riders will stall at 3"), when a ladder doesn't start at grade 1 (new riders only
+get grade 1 suggested), and when a feature has no grade.
 
-Every award goes into an append-only ledger (`XPEntry`). Each entry records the rider, the amount, the reason, the
-skill or challenge, a source key and when it was earned. Totals and levels are always added up from the ledger;
-nothing stores a total.
+### Grading guidelines
 
-- Each source key (`session:812`, `ride:40:descent`, `streak:2026-W44`) can only pay out once.
-- Entries can't be edited or deleted. A mistake is fixed with a negative `correction` entry, which you can add in
-  the admin.
-- Deleting a ride adds corrections for everything that ride earned.
+One shared document so grades stay consistent between team members: Admin → Grading guidelines. It's Markdown.
+The team can read it in the app (*Add a feature* → Guidelines) and beside every feature in the admin. It starts
+from `trails/content/grading_guidelines.md` the first time it's opened; after that, the admin copy is the one
+that counts.
 
-| Earned for | XP | Limit |
+### Logging, ladders and next up
+
+- **One tap per feature** on its page, or **Log this trail** to mark every feature in riding order after a ride
+  (ride summaries link to it for each trail ridden). Logs made without signal wait on the phone and send later;
+  each has a `client_id`, so sending one twice keeps one.
+- **Next up** (`trails/ladders.py`) suggests up to 3 features. A feature is suggested only when:
+  1. it's certified (not changed, closed or draft) and the rider hasn't cleaned it;
+  2. it's at most **one grade above** the highest grade the rider has cleaned in that type, anywhere;
+  3. for **every rung below it** in its ladder, the rider has cleaned some feature of that grade **at least
+     twice** (repeat cleans of one feature count), so rungs are never skipped;
+  4. it's **grade 7 or below**, unless the rider turned on *Advanced features* in Settings.
+
+  Features the rider rode sketchy come first, then step-ups, then trails they've ridden. Suggestions are spread
+  over different types. Each one says why, in plain words, and the copy is "next up when you're ready". A test
+  checks that the reasons never use pushy phrases.
+- **Strengths** (`trails/strengths.py`): each log counts toward the skills its feature is tagged with (or the
+  defaults for its type), weighted by grade: cleaned 1, sketchy ½, walked 0. Skills roll up to areas (Drops,
+  Cornering…). Progress shows the strongest and weakest once an area has 3 logs, and the weakest names skills to
+  look up under "Stuck?" on feature pages.
+- **"Stuck?" tips** on a feature page come from its skill tags in `progression/content/skills.json`: what the
+  skill is, why it helps, optional drills, and "you've got it when". The 50 skills are kept as they were.
+
+### Points and levels
+
+Every award goes into an append-only ledger (`XPEntry`, shown as "points"). Totals and levels are always added up
+from it. Each entry records the feature and log that earned it and the rules version. Entries can't be edited or
+deleted; deleting a log or a ride adds correction entries.
+
+| Earned for | Points | Limit |
 |---|---|---|
-| Logging a drill session | 10 | 3 per skill per day (more still count toward mastery) |
-| Uploading an attempt video | 15 | 1 per skill per day |
-| Mastering a skill | 100 × tier | once |
+| First clean of a feature | 20 × grade | once per feature |
+| Cleaning it again | 5 | 3 per feature per week (ISO week of the ride date) |
+| Rode it, sketchy | 5 × grade | once per feature |
+| Walked it | 0 | logged, no judgment |
+| Every certified feature on a trail (3+) | 100 | once per trail |
+| Every certified feature of one type at a trail system (3+) | 150 | once per ladder |
 | Completing a challenge | 50 | once |
-| A practice week (practice on 3+ days) | 25 | once a week |
-| Cleaning a feature | 20 × trail difficulty | once per feature, approved features only |
 | Trail PR | 10 | each time you beat your best |
 | First clean climb of a trail | 15 × trail difficulty | once per climb |
 | New biggest air | 10 | each new best |
@@ -159,137 +205,207 @@ nothing stores a total.
 | Jumps | 1 each | 10 a day |
 | A ride | 2 | |
 
-- **Getting better pays more than riding more.** Riding volume is capped: metres and jumps add at most 25 XP a
-  day, plus 2 per ride. PRs, a bigger air and cleaned features pay because they mean you improved. One tier-3 skill
-  is worth 300.
-- **Trail difficulty weights** are green and unrated ×1, blue ×2, black ×4, double black ×6. A rider's own rating
-  of their auto trail counts as blue at most.
-- **Levels:** level 2 needs 100 XP, and each level after that needs 22% more than the one before (20 levels).
-  Level 20 (about 19,400 XP) is roughly what mastering the whole tree earns.
-  Titles cover two levels each: PQ Punk, Gravel Grom, Berm Burner, Root Rattler, Flow Fiend, Drop Dog, Gap Goblin,
-  Sedona Shredder, Whistler Whipper, Line Legend.
-- **Practice streak:** consecutive weeks with practice on 3 or more days. Days are the rider's local date, sent by
-  the app. The ride streak (any ride that week) is separate.
+- Points use the grade **when the log was made** (`grade_at_log`), so regrading a feature never changes past
+  points. Ladders and next up use the current grade.
+- Logs on a feature that isn't live yet earn points once it's certified (the next time the rider opens Progress).
+- Drill sessions, attempt videos, skill mastery and practice weeks are worth 0 now. Their code and API are kept
+  (`/api/skills/…`) but the app doesn't use them. Points already earned from them stay in the ledger.
+- **Levels:** level 2 needs 100 points, and each level after needs 22% more (20 levels). Titles cover two levels
+  each: PQ Punk, Gravel Grom, Berm Burner, Root Rattler, Flow Fiend, Drop Dog, Gap Goblin, Sedona Shredder,
+  Whistler Whipper, Line Legend.
+
+### Editing point rules
+
+Everything is in `backend/nextline/progression/content/rules.json`:
+
+| Section | What's in it |
+|---|---|
+| `xp` | Every point value: `first_clean_per_grade`, `repeat_clean`, `sketchy_per_grade`, `walked`, `trail_complete`, `ladder_complete`, ride values |
+| `caps` | `repeat_cleans_per_feature_per_week` and the daily ride caps |
+| `bonuses` | `min_features` a trail or ladder needs before completing it pays |
+| `next_up` | `max_suggestions`, `repeat_cleans_needed`, `advanced_above_grade` |
+| `verification` | `second_reviewer_required`, `stale_after_months` |
+| `levels`, `titles` | The level curve and titles |
+
+1. Edit the file and bump `"version"` if you change point values. Each ledger entry records the version it was
+   earned under, and points already earned don't change.
+2. Run `python manage.py validate_progression`. The same checks run on `migrate`, `runserver` and `test`, so a
+   broken file stops them.
+3. Restart the server (`systemctl restart nextline`). The app doesn't need a new build.
+
+### Safety notice
+
+The wording is in `backend/nextline/trails/content/safety.json` and is marked **needs legal review**
+(`"needs_legal_review": true`). It shows on every feature page and trail page, and riders accept it when they sign
+up. Only the trail team sees the "needs legal review" note in the app.
+
+- After legal review, edit the text and set `needs_legal_review` to `false`.
+- If the meaning changes, bump `version`. Every rider then has to accept the new notice before using the app.
+
+The ride-around is always shown on a feature page when there is one, and nothing above grade 7 is suggested
+without the rider turning on advanced features.
+
+### Share cards and feature of the week
+
+- Every **first clean** opens a share card: the feature photo, its name, a grade badge, type and trail, the
+  rider's level, and a small Next Line mark. It comes in two sizes: 1080×1920 for Stories and TikTok, and
+  1080×1350 for Instagram posts. It's drawn on the server (`trails/share.py`, Pillow, Barlow fonts under the OFL in
+  `trails/fonts/`) at `GET /api/logs/{id}/share-card/?size=story|feed`.
+- **Feature of the week:** Admin → Features → select one → *Export as feature of the week*. You get a zip with the
+  card in both sizes, the original photo, and `post.txt`: name, grade, trail, how to ride it, ride-around, the POV
+  clip link and a safety line.
 
 ### Challenges
 
-A challenge has:
-- target skills
-- start and end dates
-- a goal: log N sessions, or master the skills
+A challenge has dates and a goal:
+- **next_features:** clean N features you hadn't cleaned before joining ("Clean your next three features").
+- **features:** clean every certified feature matching a trail system, a type and a grade range ("Clean every
+  grade 3 corner at Cedar Hollow"). The goal count is however many features match.
 
-Riders join a challenge, and only practice after they join counts toward it. The example is the **30-day manual
-challenge**: log 10 Manual sessions in 30 days. Challenges are created from `content/challenges.json` with
-`seed_progression`, then edited in the admin.
+Only cleans logged after joining and inside the dates count. Challenges show in the app up to 45 days before they
+start. They're seeded from `progression/content/challenges.json` with `seed_progression`, then edited in the
+admin (Admin → Challenges: set the system, feature type and grade range there). The launch challenge,
+**"Clean your next three features"**, runs from 1 to 31 January 2027.
 
-### Editing skills, points and challenges
+### Demo data
 
-The content is three JSON files in `backend/nextline/progression/content/`:
+```bash
+python manage.py seed_features_demo                    # Cedar Hollow (demo) + demo rider; prints the password
+python manage.py seed_features_demo --password secret  # choose the rider's password
+python manage.py seed_features_demo --remove           # remove all of it
+```
 
-| File | What's in it |
-|---|---|
-| `skills.json` | Branches and skills: text, drills, mastery test, tier, prerequisites, media, tags, draft flag |
-| `rules.json` | Every XP value, daily caps, mastery requirements, streak rule, level curve and titles, video limits |
-| `challenges.json` | Challenges to seed |
+This creates a made-up trail system, **Cedar Hollow (demo)**, with 3 trails (green, blue, black) and 31 certified
+features. They cover 8 types and grades 1–8, have placeholder photos marked DEMO, and include ride-arounds, one
+changed feature and one not verified in over a year. It also creates two demo team members and a rider, `demo`,
+with eight weeks of logs: cleans, sketchy goes and walks, a completed trail, and suggestions waiting.
 
-1. Edit the file. Bump its `"version"` when you change point values, since each ledger entry records the rules
-   version it was earned under.
-2. Validate it:
-   ```bash
-   python manage.py validate_progression
-   ```
-   This checks for missing fields, unknown prerequisites, prerequisite cycles (it prints the cycle path), bad tiers
-   and branches, the number of drills, sane rules and valid challenges. It also warns about unknown tags, or a skill
-   that's easier than its prerequisite. The same checks run as a Django system check and in the test suite, so
-   invalid content stops `migrate`, `runserver` and `test`.
-3. Restart the server (`systemctl restart nextline`). The app reads the tree from the API, so it doesn't need a new
-   build.
-
-Skills are identified by their `id`. Don't rename an id once riders have practised it; change its `name` instead.
-Changing point values doesn't change XP that was already earned.
+`--remove` deletes the demo trail system, its trails, features and photo files, and the demo users with their
+logs and points. Nothing else is touched. Running the command without `--remove` recreates everything from
+scratch.
 
 ### Commands
 
 ```bash
-python manage.py validate_progression     # check the content files
-python manage.py seed_progression         # create or update challenges from challenges.json
-python manage.py backfill_xp              # give existing riders the XP their rides and cleaned features earned (safe to re-run)
-python manage.py seed_progression_demo    # demo rider "demo" with 6 weeks of history; prints the password
+python manage.py validate_progression   # check the content files
+python manage.py seed_progression       # create or update challenges from challenges.json
+python manage.py backfill_xp            # points for past rides and logs on features certified since (safe to re-run)
+python manage.py seed_features_demo     # demo data; --remove to delete it
 ```
-
-The demo rider has:
-- 6 skills mastered
-- Manual ready for its mastery test, and Flat corners started
-- a 5-week practice streak
-- the manual challenge at 6/10
-- three rides
-
-Running the command again recreates the demo rider from scratch.
 
 ### API
 
+Rider endpoints:
+
 | Endpoint | What it does |
 |---|---|
-| `GET /api/skills/` | The tree: branches, every skill with the rider's state and counts, layout depth, next up (1–3 skills), level and streak |
-| `GET /api/skills/{id}/` | One skill: content, state, mastery requirements, `history` (sessions), `attempt_videos`, what it unlocks, and nearby trail features with matching tags (`?lat=&lng=`, otherwise near the rider's latest ride) |
-| `POST /api/skills/{id}/sessions/` | Log a drill session `{client_id, practiced_on, drill_index?, note?}`. Returns the XP earned (or `capped`), the skill's new state, level and streak. Repeats with the same `client_id` are ignored. |
-| `POST /api/skills/{id}/attempts/` | Upload an attempt video (multipart: `video`, `client_id`, `practiced_on`, `duration_s?`). MP4 or MOV, up to 100 MB and 60 s. |
-| `POST /api/skills/{id}/master/` | `{confirmed_test: true}` once eligible. Returns the XP, newly unlocked skills, and the level before and after. |
-| `GET /api/attempts/{id}/video/` | The rider's own attempt video; other riders get a 404 |
-| `GET /api/xp/` | The XP ledger, newest first, 50 at a time (`?before=<id>` for more) |
-| `GET /api/challenges/`, `POST /api/challenges/{id}/join/` | Running challenges with the rider's progress |
+| `GET /api/systems/`, `GET /api/systems/{id}/` | Trail systems with "cleaned N of M"; one system with trails (paths for the map), feature pins, ladder summary and next up there |
+| `GET /api/systems/{id}/ladders/` | Each type's rungs, with the rider's status on every feature |
+| `GET /api/trails/{id}/features/` | A trail's features in riding order |
+| `GET /api/features/{id}/` | A feature page: photos, POV clip, measurements, ride-around, notices, the rider's history, "Stuck?" tips, safety notice |
+| `POST /api/features/{id}/log/` | `{outcome: cleaned\|sketchy\|walked, ridden_on?, note?, client_id?, ride?}`. Returns points, `first_clean`, the level before and after, new achievements. Repeats with the same `client_id` return the first. |
+| `POST /api/logs/batch/` | "Log this trail": `{ridden_on?, ride?, logs: [{feature, outcome, client_id?, note?}]}` |
+| `PATCH/DELETE /api/logs/{id}/` | Edit a log's note, or delete it (its points are corrected) |
+| `GET /api/logs/{id}/share-card/?size=story\|feed` | The share card JPEG for one of the rider's cleans |
+| `POST /api/features/{id}/report/` | Report a change: `{note?}` or multipart with `photo` |
+| `GET /api/next-up/` | Next up (`?system=` for one system) with reasons |
+| `GET /api/safety/` | The safety notice |
+| `GET /api/xp/` | The points ledger, newest first (`?before=<id>` for more) |
+| `GET /api/challenges/`, `POST /api/challenges/{id}/join/` | Challenges with the rider's progress |
+
+Trail team endpoints (team members only):
+
+| Endpoint | What it does |
+|---|---|
+| `GET /api/team/features/` | The review queue: awaiting review, drafts, changed, reported, stale |
+| `POST /api/team/features/` | Capture a draft `{client_id, type, grade, lat, lng, trail?, name?, drop_height_m?, …}` |
+| `GET/PATCH/DELETE /api/team/features/{id}/` | One feature with what's stopping it being certified; edit it; delete a draft |
+| `POST /api/team/features/{id}/media/` | Multipart `kind` (approach, feature, exit, pov), `file`, `client_id`, `caption?`. Photos are resized to 2048 px with a 640 px thumbnail, and their location data is removed. |
+| `POST /api/team/features/{id}/submit/`, `/certify/`, `/flag/` `{status: changed\|closed}`, `/reopen/`, `/verify/` | The workflow |
+| `POST /api/team/reports/{id}/resolve/` | `{status: resolved\|dismissed}` |
+| `GET /api/team/trails/?lat=&lng=` | Shared trails, nearest first |
+| `GET /api/team/guidelines/` | The grading guidelines |
 
 ### Deploying it
 
 After pulling, on the server:
 
 ```bash
-sudo -u nextline env/bin/pip install -r backend/nextline/requirements.txt
+cd /srv/nextline
+sudo -u nextline git pull
+sudo -u nextline env/bin/pip install -r backend/nextline/requirements.txt   # adds Pillow
 cd backend/nextline
 sudo -u nextline ../../env/bin/python manage.py migrate
 sudo -u nextline ../../env/bin/python manage.py seed_progression
-sudo -u nextline ../../env/bin/python manage.py backfill_xp
+sudo -u nextline ../../env/bin/python manage.py collectstatic --noinput
 sudo -u nextline mkdir -p /srv/nextline/media
+systemctl restart nextline
 ```
 
-Then add these to `backend/nextline/.env`:
+The migration turns existing features into drafts with the new types (gap → jump, berm → corner, technical →
+other) and copies riders' old feature progress into logs. Give each feature a grade and certify it before riders
+see it again.
+
+`backend/nextline/.env` needs:
 
 ```
 MEDIA_ROOT=/srv/nextline/media
 USE_X_ACCEL_REDIRECT=True
 ```
 
-Attempt videos need two changes to the nginx site:
-
-- a larger upload limit, for the upload path only
-- an internal location, so nginx serves video files after Django has checked that the rider owns them
+Add these to the nginx site's `server` block for the API (the one with `listen 443`), then run
+`nginx -t && systemctl reload nginx`:
 
 ```nginx
-location ~ ^/api/skills/[^/]+/attempts/$ {
-    client_max_body_size 110M;
+# Feature photos and POV clips are public; riders' own videos stay private (below).
+location /media/features/ {
+    alias /srv/nextline/media/features/;
+    expires 7d;
+}
+
+# Photos from the team's phones and POV clips from the admin need a bigger upload limit.
+location ~ ^/api/team/features/[0-9]+/media/$ {
+    client_max_body_size 300M;
     proxy_pass http://unix:/run/nextline/nextline.sock;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_read_timeout 300s;
 }
+location ~ ^/(admin|[^/]+)/trails/feature/ {
+    client_max_body_size 300M;
+    proxy_pass http://unix:/run/nextline/nextline.sock;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 300s;
+}
+location ~ ^/api/features/[0-9]+/report/$ {
+    client_max_body_size 30M;
+    proxy_pass http://unix:/run/nextline/nextline.sock;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
 
+# Riders' private videos: served after Django checks who's asking.
 location /protected-media/ {
     internal;
     alias /srv/nextline/media/;
 }
 ```
 
-Finish with `nginx -t && systemctl reload nginx` and `systemctl restart nextline`. Videos are stored on the droplet's
-disk; a 60 s clip at 720p is roughly 10–40 MB.
+The admin rule matches `ADMIN_URL`, whatever you set it to. Photos and clips are stored on the droplet's disk.
+Phone photos are resized to about 0.5 MB, and POV clips are the main cost (roughly 20–40 MB each).
 
-The app added `expo-image-picker` and `expo-video`, so installed builds need a new EAS build. Expo Go works as it is.
+**The app needs no new native modules** (camera, files, sharing and maps were already in it), so an existing
+development or TestFlight build only needs the new JavaScript: restart `npx expo start`, or push a new build as
+usual.
 
 ## Sharing trails
 
-Riders' auto trails are private: only they see the trail and its features. Shared trails are what let riders
-compare times (speed rank) and see features others pinned. Their difficulty counts in full toward XP: black and
-double-black weights need a shared trail.
+Riders' auto trails are private: only they see them. Shared trails are where features live, and what lets riders
+compare times (speed rank).
 
 To share a trail, ride it with the app yourself. Then in the Django admin, go to **Trails**, select it, and run
 **"Make shared, merging riders' copies of it"** (`trails/sharing.py`). This:
@@ -297,31 +413,11 @@ To share a trail, ride it with the app yourself. Then in the Django admin, go to
 - makes the trail shared (no owner)
 - finds every rider's private copy: same direction, both ends within 60 m, similar length
 - moves their laps onto the shared trail, drops laps counted twice, and recalculates PRs
-- moves their features across; features within 15 m of an existing one are merged, keeping each rider's best
-  progress and fixing up their check-ins
+- moves any features on the copies across as drafts. Features within 15 m of an existing one are merged, and
+  riders' logs move with them.
 - deletes the empty copies
 
-Afterwards, set the trail's name and difficulty and review any features that were moved in. Riders who ride it
-later are timed on the shared trail directly.
-
-### Approving features
-
-Riders can pin features on any trail they can see.
-
-- **On their own private trail,** a pin is live at once, since only they see that trail.
-- **On a shared trail,** a rider's pin waits for approval. Until then only that rider sees it and can track it, and
-  it earns no XP or achievements. That stops anyone from pinning made-up features on a black trail to level up.
-  Once it's approved, riders who already cleaned it get the XP the next time they open Progress.
-- **Pins by staff accounts** are live at once.
-
-To review them, go to **Admin → Features** and filter by *approved = No*. From there:
-
-- **Approve:** the feature goes live for everyone and starts counting.
-- **Merge into the nearest approved feature** (within 40 m) for duplicates. The rider's progress and check-ins
-  move to the existing feature.
-- **Delete** to reject it.
-
-Sharing a trail also marks riders' pins on it as waiting for approval.
+Afterwards, set the trail's name, difficulty and trail system, then grade and certify its features.
 
 ## App
 
@@ -332,7 +428,7 @@ cd frontend/nextline
 npm install
 cp .env.example .env            # API_URL=http://<your LAN IP>:8000
 npx expo start
-npm test                        # jump/crash detector and skill tree layout tests
+npm test                        # detectors, logging and capture queues, feature helpers
 ```
 
 **Expo Go vs. a development build.** In Expo Go, recording only works while the app is open; on iPhone, Expo Go
@@ -364,10 +460,11 @@ detector found. Tune the thresholds in `recording/detectors.js` and re-run `npm 
 
 These are from the MVP plan:
 
-- Video clips from rides (attempt videos on skills, compared side by side, are built)
-- Coach and team accounts (coach verification is an admin action for now)
-- Logging practice offline (sessions and attempts need a connection; retries are safe)
-- Instagram summary card (the share button sends text for now)
+- Video clips from rides, and riders attaching their own video to a log (the API field exists; the app doesn't
+  offer it yet)
+- Coach accounts
+- Share cards for whole rides (feature first cleans have them; the ride share button sends text)
+- Editing skill tags from the app (the admin has them)
 - Friends confirming milestones, and leaderboards
 - Strava, Garmin and Apple Health import
 - Precision mode with a watch or bar mount

@@ -64,17 +64,6 @@ class TrailApiTests(TestCase):
         self.assertEqual(len(res.data['efforts']), 1)
         self.assertEqual(res.data['direction'], 'descent')
 
-    def test_set_feature_progress(self):
-        upload(self.client)
-        trail = descent_trail()
-        Trail.objects.filter(pk=trail.pk).update(owner=None)
-        lat, lng = trail.path[5]
-        feature = Feature.objects.create(trail=trail, name='Gap', lat=lat, lng=lng, status='certified', grade=2)
-        res = self.client.put(f'/api/features/{feature.id}/progress/', {'status': 'cleaned'}, format='json')
-        self.assertEqual(res.data['status'], 'cleaned')
-        self.assertEqual(res.data['clean_count'], 1)
-        self.assertIsNotNone(res.data['first_cleaned_at'])
-
     def test_rename_own_auto_trail_only(self):
         upload(self.client)
         mine = descent_trail()
@@ -121,8 +110,6 @@ class PromoteTrailTests(TestCase):
                                             position=2)
         log(self.bob, self.bobs_drop)
         log(self.bob, self.rocks, 'sketchy')
-        from rides.models import Ride
-        Ride.objects.filter(pk=bob_ride['id']).update(cleaned_features=[self.bobs_drop.id])
         self.bob_ride_id = bob_ride['id']
 
     def test_promote_merges_copies(self):
@@ -140,15 +127,13 @@ class PromoteTrailTests(TestCase):
         self.assertFalse(Feature.objects.filter(pk=self.bobs_drop.pk).exists())
         self.rocks.refresh_from_db()
         self.assertEqual(self.rocks.trail, self.trail)
-        from rides.models import Ride
-        self.assertEqual(Ride.objects.get(pk=self.bob_ride_id).cleaned_features, [self.drop.id])
 
         # Moved features are drafts: riders see none until the team certifies them.
         self.assertEqual(self.bob_client.get(f'/api/trails/{self.trail.id}/').data['features'], [])
         Feature.objects.filter(trail=self.trail).update(status='certified', grade=3)
         detail = self.bob_client.get(f'/api/trails/{self.trail.id}/').data
         self.assertEqual({f['name']: f['status'] for f in detail['features']},
-                         {'3 ft drop': 'cleaned', 'Rock garden': 'almost'})
+                         {'3 ft drop': 'cleaned', 'Rock garden': 'sketchy'})
 
     def test_new_riders_ride_the_shared_trail(self):
         from .sharing import promote

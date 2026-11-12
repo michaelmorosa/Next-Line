@@ -34,7 +34,7 @@ class FeatureSerializer(serializers.ModelSerializer):
 
     def get_status(self, obj):
         p = self._progress(obj)
-        return p.legacy_status if p else 'locked'
+        return p.status if p else 'not_yet'
 
     def get_clean_count(self, obj):
         p = self._progress(obj)
@@ -59,12 +59,6 @@ class FeatureSerializer(serializers.ModelSerializer):
         if nearest > MAX_FEATURE_DISTANCE_M:
             raise serializers.ValidationError("Pin the feature on the trail, not off to the side.")
         return attrs
-
-
-class FeatureProgressSerializer(serializers.Serializer):
-    """Legacy: the older app sets a status; it's recorded as a log (cleaned or sketchy)."""
-    status = serializers.ChoiceField(choices=('locked', 'almost', 'cleaned'))
-    note = serializers.CharField(max_length=120, required=False, allow_blank=True)
 
 
 class TrailListSerializer(serializers.ModelSerializer):

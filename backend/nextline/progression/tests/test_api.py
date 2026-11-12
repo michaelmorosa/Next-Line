@@ -5,7 +5,6 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from progression import services
 from progression.models import XPEntry
 from trails.models import Feature, FeatureType, Trail
 

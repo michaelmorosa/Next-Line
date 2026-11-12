@@ -268,7 +268,8 @@ class LoggingApiTests(RiderTestCase):
 
 class PagesApiTests(RiderTestCase):
     def test_trail_system_page(self):
-        a, b = self.feature(1, position=1), self.feature(2, position=2)
+        a = self.feature(1, position=1)
+        self.feature(2, position=2)
         self.feature(1, trail=self.lower)
         self.log(a)
         data = self.client.get(f'/api/systems/{self.system.id}/').data

@@ -5,9 +5,8 @@ from rest_framework.decorators import action, api_view, throttle_classes
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
-from progression import feature_points, ride_xp
+from progression import ride_xp
 from trails import rider
-from trails.models import Feature, FeatureLog, Outcome
 
 from . import achievements, level_guide, scoring
 from .alerts import send_crash_alert
@@ -72,41 +71,11 @@ class RideViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Destr
             for field in ('confidence', 'crashed', 'touchdowns', 'notes'):
                 if field in data:
                     setattr(ride, field, data[field])
-            if 'cleaned' in data:
-                apply_cleaned(request.user, ride, set(data['cleaned']))
-            for feature_id in set(data.get('almost', [])) - set(data.get('cleaned', [])):
-                if not FeatureLog.objects.filter(user=request.user, feature_id=feature_id, ride=ride).exists():
-                    log_feature(request.user, feature_id, ride, Outcome.SKETCHY)
             ride.checked_in_at = timezone.now()
             ride.save()
         body = self._detail(ride.pk)
         body['new_achievements'] = achievements.describe(achievements.award(request.user))
         return Response(body)
-
-
-def log_feature(user, feature_id, ride, outcome):
-    feature = Feature.objects.get(pk=feature_id)
-    log = FeatureLog.objects.create(
-        user=user, feature=feature, ride=ride, outcome=outcome, ridden_on=timezone.localdate(ride.started_at),
-        logged_at=ride.started_at, grade_at_log=feature.grade,
-    )
-    feature_points.log_created(log)
-    return log
-
-
-def apply_cleaned(user, ride, cleaned):
-    """Set the ride's cleaned features: one 'cleaned' log per feature for this ride, so editing the check-in
-    adds or removes logs instead of adding them again."""
-    before = set(ride.cleaned_features)
-    for feature_id in cleaned - before:
-        for log in FeatureLog.objects.filter(user=user, feature_id=feature_id, ride=ride).exclude(
-                outcome=Outcome.CLEANED):
-            feature_points.delete_log(log)
-        log_feature(user, feature_id, ride, Outcome.CLEANED)
-    for log in FeatureLog.objects.filter(
-            user=user, ride=ride, feature_id__in=before - cleaned, outcome=Outcome.CLEANED):
-        feature_points.delete_log(log)
-    ride.cleaned_features = sorted(cleaned)
 
 
 class CrashAlertThrottle(ScopedRateThrottle):

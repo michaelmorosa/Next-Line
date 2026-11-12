@@ -325,20 +325,31 @@ class CheckinTests(TestCase):
         res = self.client.get(f'/api/rides/{self.ride_id}/')
         self.assertEqual([f['name'] for f in res.data['features']], ['3 ft drop', 'Roots'])
 
-    def test_checkin_marks_features(self):
-        res = self.checkin(confidence=4, cleaned=[self.drop.id], almost=[self.roots.id])
+    def test_checkin(self):
+        res = self.checkin(confidence=4, crashed=True)
         self.assertEqual(res.status_code, 200, res.data)
-        self.assertEqual(res.data['confidence'], 4)
+        self.assertEqual((res.data['confidence'], res.data['crashed']), (4, True))
+
+    def test_features_logged_from_the_ride(self):
+        res = self.client.post('/api/logs/batch/', {'ride': self.ride_id, 'logs': [
+            {'feature': self.drop.id, 'outcome': 'cleaned'}, {'feature': self.roots.id, 'outcome': 'sketchy'},
+        ]}, format='json')
+        self.assertEqual(res.status_code, 201, res.data)
         drop = FeatureLog.objects.get(feature=self.drop)
         self.assertEqual((drop.outcome, drop.ride_id, drop.grade_at_log), ('cleaned', self.ride_id, 3))
         self.assertEqual(FeatureLog.objects.get(feature=self.roots).outcome, 'sketchy')
 
-    def test_editing_checkin_does_not_double_count(self):
-        self.checkin(cleaned=[self.drop.id])
-        self.checkin(cleaned=[self.drop.id])
-        self.assertEqual(FeatureLog.objects.filter(feature=self.drop, outcome='cleaned').count(), 1)
-        self.checkin(cleaned=[])
-        self.assertFalse(FeatureLog.objects.filter(feature=self.drop).exists())
+    def test_older_apps_checkin_lists_are_ignored(self):
+        res = self.checkin(confidence=3, cleaned=[self.drop.id], almost=[self.roots.id])
+        self.assertEqual(res.status_code, 200)
+        self.assertFalse(FeatureLog.objects.exists())
+
+    def test_cannot_log_another_riders_ride(self):
+        other = APIClient()
+        other.force_authenticate(User.objects.create_user(username='other', email='o@example.com', password='x'))
+        res = other.post(f'/api/features/{self.drop.id}/log/', {'outcome': 'cleaned', 'ride': self.ride_id},
+                         format='json')
+        self.assertEqual(res.status_code, 400)
 
     def test_rider_corrects_touchdowns(self):
         res = self.checkin(touchdowns=3)
@@ -346,15 +357,6 @@ class CheckinTests(TestCase):
         res = self.checkin(touchdowns=None)
         self.assertEqual(res.data['touchdowns'], 0)  # back to the estimate
         self.assertEqual(self.checkin(touchdowns=-1).status_code, 400)
-
-    def test_cannot_check_in_drafts_or_private_features(self):
-        other = User.objects.create_user(username='other', email='o@example.com', password='x')
-        hidden = Trail.objects.create(name='Secret', owner=other, start_lat=0, start_lng=0, end_lat=0, end_lng=0,
-                                      length_m=1)
-        feature = Feature.objects.create(trail=hidden, name='x', lat=0, lng=0, status='certified', grade=1)
-        self.assertEqual(self.checkin(cleaned=[feature.id]).status_code, 400)
-        draft = Feature.objects.create(trail=self.trail, name='Draft', lat=0, lng=0)
-        self.assertEqual(self.checkin(cleaned=[draft.id]).status_code, 400)
 
 
 class CrashAlertTests(TestCase):
@@ -529,7 +531,8 @@ class ProgressTests(TestCase):
         lat, lng = trail.path[5]
         feature = Feature.objects.create(trail=trail, name='Root staircase', lat=lat, lng=lng, status='certified',
                                          grade=2)
-        res = self.client.post(f"/api/rides/{ride['id']}/checkin/", {'cleaned': [feature.id]}, format='json')
+        self.client.post(f'/api/features/{feature.id}/log/', {'outcome': 'cleaned', 'ride': ride['id']}, format='json')
+        res = self.client.get(f"/api/rides/{ride['id']}/")
         self.assertEqual({i['label']: i['amount'] for i in res.data['xp']['items']}['First clean'], 40)  # 20 x grade 2
 
     def test_progress_has_next_up_features(self):

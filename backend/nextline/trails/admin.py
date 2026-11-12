@@ -11,7 +11,7 @@ from rides.analysis import haversine
 
 from . import certification, share
 from .models import (
-    Certification, Feature, FeatureLog, FeatureMedia, FeatureProgress, FeatureReport, GradingGuidelines,
+    Certification, Feature, FeatureLog, FeatureMedia, FeatureReport, GradingGuidelines,
     ReportStatus, Trail, TrailSystem,
 )
 from .sharing import merge_feature, promote
@@ -273,13 +273,3 @@ class GradingGuidelinesAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.updated_by = request.user
         super().save_model(request, obj, form, change)
-
-
-@admin.register(FeatureProgress)
-class FeatureProgressAdmin(admin.ModelAdmin):
-    """Legacy, read-only: progress from before rider logs."""
-    list_display = ('user', 'feature', 'status', 'clean_count', 'first_cleaned_at')
-    raw_id_fields = ('user', 'feature')
-
-    def has_change_permission(self, request, obj=None):
-        return False

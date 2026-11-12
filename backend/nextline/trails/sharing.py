@@ -42,18 +42,6 @@ def merge_progress(source, target):
     FeatureLog.objects.filter(feature=source).update(feature=target)
 
 
-def remap_cleaned(source, target):
-    """Point rides' check-ins at the surviving feature, so editing an old check-in still adjusts the right count."""
-    from rides.models import Ride
-
-    users = set(FeatureLog.objects.filter(feature__in=[source, target]).values_list('user_id', flat=True))
-    users.add(source.created_by_id)
-    for ride in Ride.objects.filter(user_id__in=users).exclude(cleaned_features=[]):
-        if source.id in ride.cleaned_features:
-            ride.cleaned_features = sorted({target.id if i == source.id else i for i in ride.cleaned_features})
-            ride.save(update_fields=['cleaned_features'])
-
-
 def move_features(copy, shared):
     """Move a copy's features to the shared trail. Returns (moved, merged)."""
     moved = merged = 0
@@ -63,7 +51,6 @@ def move_features(copy, shared):
             if haversine(f.lat, f.lng, feature.lat, feature.lng) <= SAME_FEATURE_RADIUS_M
         ), None)
         if same:
-            remap_cleaned(feature, same)
             merge_progress(feature, same)
             feature.delete()
             merged += 1
@@ -106,8 +93,7 @@ def recompute_prs(trail):
 
 @transaction.atomic
 def merge_feature(feature, target):
-    """Fold a duplicate feature into another: riders' logs and check-ins move over, the duplicate goes."""
-    remap_cleaned(feature, target)
+    """Fold a duplicate feature into another: riders' logs move over, the duplicate goes."""
     merge_progress(feature, target)
     feature.delete()
 

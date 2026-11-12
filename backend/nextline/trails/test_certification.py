@@ -304,7 +304,7 @@ class LadderAndAdminTests(TeamTestCase):
         self.assertIn('Drop: the ladder starts at grade 2. Riders new to drops only get grade 1 suggested.', messages)
 
     def test_bulk_trail_view_reorders(self):
-        a = Feature.objects.create(trail=self.trail, name='A', type='drop', grade=1, lat=45, lng=-122, position=1)
+        Feature.objects.create(trail=self.trail, name='A', type='drop', grade=1, lat=45, lng=-122, position=1)
         b = Feature.objects.create(trail=self.trail, name='B', type='drop', grade=3, lat=45, lng=-122, position=2)
         admin = User.objects.create_superuser(username='boss', email='boss@example.com', password='x')
         self.client.force_login(admin)

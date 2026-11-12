@@ -1,6 +1,18 @@
 # Features plan: progression built on real trail features
 
-Status: **draft for review**. Nothing below has been built yet. Step 1 stops here.
+Status: **built** (phases 1–8, November 2026). The README is the reference for how it works now; this file is the
+plan as approved, with the differences below.
+
+Where the build differs from the plan:
+- `rules.json` keeps the section name `xp` for point values (renaming it would have touched every reader). The app
+  and admin say "points".
+- Share cards are drawn on each request, not cached; it takes well under a second.
+- Riders who haven't accepted the current safety notice see only the notice until they do, not just at sign-up.
+- Challenges also show up to 45 days before they start, so the January challenge is visible in December.
+- The old skill-tree demo rider (`seed_progression_demo`) and its sample video are gone; `seed_features_demo`
+  replaces them.
+- Ride check-ins no longer take cleaned/almost lists; older app builds that send them are ignored rather than
+  rejected.
 
 The goal: progress means a specific drop, jump or corner on a real trail, graded by our team, and not a skill
 tree. Riders log how each feature went with one tap, climb ladders of similar features, and get "next up when

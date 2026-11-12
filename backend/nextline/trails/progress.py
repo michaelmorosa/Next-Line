@@ -26,11 +26,6 @@ class FeatureState:
             return Outcome.WALKED.value
         return 'not_yet'
 
-    @property
-    def legacy_status(self):
-        """The pre-log status the older app screens understand: locked, almost or cleaned."""
-        return {'cleaned': 'cleaned', 'sketchy': 'almost'}.get(self.status, 'locked')
-
 
 def states(user, features=None, until=None):
     """{feature_id: FeatureState} for every feature the rider has logged (optionally only `features`)."""

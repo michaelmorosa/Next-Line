@@ -8,7 +8,7 @@ from datetime import timedelta
 from django.db.models import Avg, Count, Max, Min, Sum
 from django.utils import timezone
 
-from progression import feature_points, ride_xp, summary
+from progression import feature_points, summary
 from trails import progress as feature_progress
 from trails.models import Direction
 

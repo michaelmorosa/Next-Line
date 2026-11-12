@@ -1,21 +1,14 @@
 from django.db.models import Count, Max, Min, Q
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
-from progression import feature_points
-from rides import achievements
-
 from . import certification
-from .models import Feature, FeatureLog, Outcome, Trail
-from .serializers import (
-    FeatureProgressSerializer, FeatureSerializer, TrailDetailSerializer, TrailListSerializer, TrailUpdateSerializer,
-    progress_for,
-)
+from .models import Feature, Outcome, Trail
+from .serializers import TrailDetailSerializer, TrailListSerializer, TrailUpdateSerializer
 
 # Auto trails show up once ridden this many full laps, so one-off descents don't clutter the list.
 AUTO_TRAIL_MIN_LAPS = 2
@@ -83,29 +76,6 @@ class FeatureViewSet(viewsets.GenericViewSet):
 
     def get_queryset(self):
         return Feature.objects.live()
-
-    @action(detail=True, methods=['put'])
-    def progress(self, request, pk=None):
-        """Legacy: the older app's status picker. Cleaned and almost are recorded as logs; locked removes today's."""
-        feature = self.get_object()
-        serializer = FeatureProgressSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        wanted = serializer.validated_data['status']
-        today = timezone.localdate()
-        if wanted == 'locked':
-            for log in FeatureLog.objects.filter(user=request.user, feature=feature, ridden_on=today):
-                feature_points.delete_log(log)
-        else:
-            feature_points.log_created(FeatureLog.objects.create(
-                user=request.user, feature=feature, ridden_on=today, grade_at_log=feature.grade,
-                outcome=Outcome.CLEANED if wanted == 'cleaned' else Outcome.SKETCHY,
-                note=serializer.validated_data.get('note', ''),
-            ))
-        feature = features_with_counts(request.user).get(pk=feature.pk)
-        context = {'request': request, 'progress': progress_for(request.user, [feature])}
-        body = FeatureSerializer(feature, context=context).data
-        body['new_achievements'] = achievements.describe(achievements.award(request.user))
-        return Response(body)
 
     @action(detail=True, methods=['post'], parser_classes=[JSONParser, MultiPartParser, FormParser])
     def report(self, request, pk=None):

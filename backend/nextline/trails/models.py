@@ -210,30 +210,6 @@ class Feature(models.Model):
         return self.status in LIVE_STATUSES
 
 
-class FeatureStatus(models.TextChoices):
-    LOCKED = 'locked', 'Locked'
-    ALMOST = 'almost', 'Almost'
-    CLEANED = 'cleaned', 'Cleaned'
-
-
-class FeatureProgress(models.Model):
-    """Legacy: one rider's progress on one feature, from before FeatureLog. Copied into logs by a migration and
-    no longer written."""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='feature_progress')
-    feature = models.ForeignKey(Feature, on_delete=models.CASCADE, related_name='progress')
-    status = models.CharField(max_length=10, choices=FeatureStatus.choices, default=FeatureStatus.LOCKED)
-    clean_count = models.PositiveIntegerField(default=0)
-    first_cleaned_at = models.DateTimeField(null=True, blank=True)
-    note = models.CharField(max_length=120, blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        constraints = [models.UniqueConstraint(fields=['user', 'feature'], name='one_progress_per_feature')]
-
-    def __str__(self):
-        return f'{self.user} · {self.feature} · {self.status}'
-
-
 class Outcome(models.TextChoices):
     CLEANED = 'cleaned', 'Cleaned it'
     SKETCHY = 'sketchy', 'Rode it, sketchy'

@@ -3,7 +3,7 @@ from django.db.models import Count, Q
 from rest_framework import serializers
 
 from progression import ride_xp
-from trails.models import Direction, Feature, Trail
+from trails.models import Direction
 from trails.serializers import FeatureSerializer, progress_for
 from trails.views import features_with_counts
 
@@ -106,7 +106,7 @@ class RideDetailSerializer(RideListSerializer):
     class Meta(RideListSerializer.Meta):
         fields = RideListSerializer.Meta.fields + (
             'max_speed', 'total_air_s', 'climb_time_s', 'descent_time_s', 'longest_nonstop_climb_m', 'climb_rests',
-            'climb_pace_held', 'track', 'confidence', 'crashed', 'notes', 'cleaned_features',
+            'climb_pace_held', 'track', 'confidence', 'crashed', 'notes',
             'jumps', 'efforts', 'laps', 'xp', 'flow_vs_avg', 'biggest_air_is_pb', 'speed_rank', 'features',
         )
 
@@ -154,16 +154,8 @@ class CheckinSerializer(serializers.Serializer):
     # Null goes back to the estimate.
     touchdowns = serializers.IntegerField(min_value=0, max_value=999, required=False, allow_null=True)
     notes = serializers.CharField(required=False, allow_blank=True, max_length=2000)
-    cleaned = serializers.ListField(child=serializers.IntegerField(), required=False)
-    almost = serializers.ListField(child=serializers.IntegerField(), required=False)
-
-    def validate(self, attrs):
-        user = self.context['request'].user
-        ids = set(attrs.get('cleaned', [])) | set(attrs.get('almost', []))
-        visible = set(Feature.objects.visible_to(user).filter(id__in=ids).values_list('id', flat=True))
-        if ids - visible:
-            raise serializers.ValidationError("Some of those features don't exist.")
-        return attrs
+    # Features are logged on their own now (trails/rider.py), linked to the ride. Older apps sending cleaned/almost
+    # lists here are ignored.
 
 
 class CrashAlertSerializer(serializers.Serializer):
