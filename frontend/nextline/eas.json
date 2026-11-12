@@ -6,6 +6,9 @@
   "build": {
     "development": {
       "distribution": "internal",
+      "env": {
+        "APP_VARIANT": "development"
+      },
       "ios": {
         "simulator": false
       },
