@@ -9,10 +9,10 @@ from progression import services
 from progression.models import XPEntry
 from trails.models import Feature, FeatureType, Trail
 
-from .helpers import FOUNDATIONS, TempMediaMixin, make_user, video
+from .helpers import FOUNDATIONS, LegacyPointsMixin, TempMediaMixin, make_user, video
 
 
-class ApiTestCase(TempMediaMixin, TestCase):
+class ApiTestCase(LegacyPointsMixin, TempMediaMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.user = make_user()

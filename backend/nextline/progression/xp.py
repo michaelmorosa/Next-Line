@@ -9,7 +9,7 @@ from . import content
 from .models import Attempt, Mastery, PracticeSession, Reason, XPEntry
 
 
-def award(user, reason, source, amount, *, skill_id='', challenge=None, at=None):
+def award(user, reason, source, amount, *, skill_id='', challenge=None, at=None, feature_id=None, log_id=None):
     """Append one ledger entry, or None if `source` has already paid out or the amount is 0."""
     if not amount:
         return None
@@ -18,6 +18,7 @@ def award(user, reason, source, amount, *, skill_id='', challenge=None, at=None)
             return XPEntry.objects.create(
                 user=user, amount=amount, reason=reason, source=source, skill_id=skill_id, challenge=challenge,
                 rules_version=content.rules()['version'], created_at=at or timezone.now(),
+                feature_id=feature_id, log_id=log_id,
             )
     except IntegrityError:
         return None

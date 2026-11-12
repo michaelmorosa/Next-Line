@@ -19,8 +19,9 @@ AIR_STEP_S = 0.1
 AIR_SUGGEST_BELOW_S = 1.0
 
 
-def feature_xp(trail):
-    return round(content.rules()['xp']['feature_cleaned_per_weight'] * trusted_weight(trail.difficulty, trail.owner_id))
+def feature_xp(feature):
+    """Points for a first clean of this feature."""
+    return content.rules()['xp']['first_clean_per_grade'] * (feature.grade or 0)
 
 
 def suggestions(user):
@@ -38,7 +39,7 @@ def suggestions(user):
     def rank(f):
         # Ones you've almost got first, then trails you ride, then what others manage, then the most XP.
         return (status.get(f.id) != 'sketchy', f.trail_id not in ridden, -f.riders_cleaned,
-                -feature_xp(f.trail))
+                -feature_xp(f))
 
     for f in sorted(features, key=rank)[:SUGGESTED_FEATURES]:
         notes = [f'on {f.trail.name}']
@@ -47,7 +48,7 @@ def suggestions(user):
         if f.riders_cleaned:
             notes.append(f"{f.riders_cleaned} rider{'s' if f.riders_cleaned != 1 else ''} cleaned it")
         out.append({'kind': 'feature', 'title': f'Clean {f.name}', 'detail': ' · '.join(notes),
-                    'xp': feature_xp(f.trail), 'trail': f.trail_id})
+                    'xp': feature_xp(f), 'trail': f.trail_id})
 
     climbs = (
         TrailEffort.objects.filter(user=user, trail__direction=Direction.CLIMB).values('trail_id', 'trail__name')
@@ -89,33 +90,49 @@ def level_rules():
         'levels': [{'level': i + 1, 'xp': need, 'title': xp.title_for(i + 1, rules)} for i, need in enumerate(table)],
         'titles': rules['titles'],
         'master_title': rules['master_title'],
-        'sources': [
+        'sources': [s for s in [
+            {'key': Reason.FIRST_CLEAN, 'label': 'First clean of a feature',
+             'how': f"{v['first_clean_per_grade']} points times the feature's grade.", 'value': v['first_clean_per_grade']},
+            {'key': Reason.REPEAT_CLEAN, 'label': 'Cleaning it again',
+             'how': f"{v['repeat_clean']} points, up to {caps['repeat_cleans_per_feature_per_week']} times per "
+                    "feature a week.", 'value': v['repeat_clean']},
+            {'key': Reason.SKETCHY, 'label': 'Rode it, sketchy',
+             'how': f"{v['sketchy_per_grade']} points times the grade, once per feature. Walking it is logged "
+                    "too, and that's fine.", 'value': v['sketchy_per_grade']},
+            {'key': Reason.TRAIL_COMPLETE, 'label': 'Every feature on a trail',
+             'how': f"{v['trail_complete']} bonus points, once per trail.", 'value': v['trail_complete']},
+            {'key': Reason.LADDER_COMPLETE, 'label': 'A whole ladder',
+             'how': f"{v['ladder_complete']} bonus points for every feature of one type at a trail system.",
+             'value': v['ladder_complete']},
             {'key': Reason.SESSION, 'label': 'Drill sessions',
-             'how': f"{v['drill_session']} XP each, up to {caps['drill_sessions_per_skill_per_day']} per skill a day."},
+             'how': f"{v['drill_session']} XP each, up to {caps['drill_sessions_per_skill_per_day']} per skill a day.",
+             'value': v['drill_session']},
             {'key': Reason.ATTEMPT, 'label': 'Attempt videos',
-             'how': f"{v['attempt_video']} XP each, up to {caps['attempt_videos_per_skill_per_day']} per skill a day."},
+             'how': f"{v['attempt_video']} XP each, up to {caps['attempt_videos_per_skill_per_day']} per skill a day.",
+             'value': v['attempt_video']},
             {'key': Reason.MASTERY, 'label': 'Skills mastered',
              'how': f"{v['mastery_per_tier']} XP times the skill's tier (1–{max(content.TIERS)}). Needs {m['min_sessions']} sessions on "
                     f"at least {m['min_practice_days']} days and {m['min_videos']} attempt video, then you confirm "
-                    "you passed the mastery test."},
+                    "you passed the mastery test.", 'value': v['mastery_per_tier']},
             {'key': Reason.STREAK, 'label': 'Practice weeks',
              'how': f"{v['weekly_streak']} XP for each week you practise on "
-                    f"{rules['streak']['practice_days_per_week']} or more days."},
-            {'key': Reason.CHALLENGE, 'label': 'Challenges', 'how': f"{v['challenge_complete']} XP each."},
-            {'key': Reason.FEATURE, 'label': 'Features cleaned',
-             'how': f"{v['feature_cleaned_per_weight']} XP times the trail difficulty, the first time. Mark them in "
-                    "the check-in."},
-            {'key': Reason.PR, 'label': 'Trail PRs', 'how': f"{v['trail_pr']} XP each time you beat your best."},
+                    f"{rules['streak']['practice_days_per_week']} or more days.", 'value': v['weekly_streak']},
+            {'key': Reason.CHALLENGE, 'label': 'Challenges', 'how': f"{v['challenge_complete']} points each.",
+             'value': v['challenge_complete']},
+            {'key': Reason.PR, 'label': 'Trail PRs', 'how': f"{v['trail_pr']} points each time you beat your best.",
+             'value': v['trail_pr']},
             {'key': Reason.CLEAN_CLIMB, 'label': 'Clean climbs',
-             'how': f"{v['clean_climb_per_weight']} XP times difficulty, the first time you ride a climb with no "
-                    "foot down."},
-            {'key': Reason.AIR, 'label': 'Biggest air', 'how': f"{v['biggest_air']} XP each new best."},
+             'how': f"{v['clean_climb_per_weight']} points times difficulty, the first time you ride a climb with no "
+                    "foot down.", 'value': v['clean_climb_per_weight']},
+            {'key': Reason.AIR, 'label': 'Biggest air', 'how': f"{v['biggest_air']} points each new best.",
+             'value': v['biggest_air']},
             {'key': Reason.DESCENT, 'label': 'Descending',
-             'how': f"{v['descent_per_100m']} XP per 100 m, up to {caps['descent_xp_per_day']} a day."},
+             'how': f"{v['descent_per_100m']} points per 100 m, up to {caps['descent_xp_per_day']} a day.",
+             'value': v['descent_per_100m']},
             {'key': Reason.JUMPS, 'label': 'Jumps',
-             'how': f"{v['jump']} XP per jump, up to {caps['jump_xp_per_day']} a day."},
-            {'key': Reason.RIDE, 'label': 'Rides', 'how': f"{v['ride']} XP for each ride."},
-        ],
+             'how': f"{v['jump']} points per jump, up to {caps['jump_xp_per_day']} a day.", 'value': v['jump']},
+            {'key': Reason.RIDE, 'label': 'Rides', 'how': f"{v['ride']} points for each ride.", 'value': v['ride']},
+        ] if s.pop('value')],  # sources switched off in rules.json (worth 0) aren't shown
         'difficulty_weights': [
             {'difficulty': d, 'label': labels[d], 'weight': DIFFICULTY_WEIGHT[d]}
             for d in (Difficulty.GREEN, Difficulty.BLUE, Difficulty.BLACK, Difficulty.DOUBLE_BLACK)

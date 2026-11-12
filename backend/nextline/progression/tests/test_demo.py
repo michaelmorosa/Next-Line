@@ -9,10 +9,10 @@ from progression.models import ChallengeEntry, XPEntry
 from progression.services import challenge_progress
 from progression.state import rider_skills
 
-from .helpers import TempMediaMixin, User
+from .helpers import LegacyPointsMixin, TempMediaMixin, User
 
 
-class DemoRiderTests(TempMediaMixin, TestCase):
+class DemoRiderTests(LegacyPointsMixin, TempMediaMixin, TestCase):
     def test_demo_rider_history(self):
         out = io.StringIO()
         call_command('seed_progression_demo', password='demo-pass-123', stdout=out)

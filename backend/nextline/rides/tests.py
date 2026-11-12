@@ -530,7 +530,7 @@ class ProgressTests(TestCase):
         feature = Feature.objects.create(trail=trail, name='Root staircase', lat=lat, lng=lng, status='certified',
                                          grade=2)
         res = self.client.post(f"/api/rides/{ride['id']}/checkin/", {'cleaned': [feature.id]}, format='json')
-        self.assertEqual({i['label']: i['amount'] for i in res.data['xp']['items']}['Feature cleaned'], 20)
+        self.assertEqual({i['label']: i['amount'] for i in res.data['xp']['items']}['First clean'], 40)  # 20 x grade 2
 
     def test_suggestions_with_xp(self):
         upload(self.client)
@@ -555,7 +555,8 @@ class ProgressTests(TestCase):
         self.assertEqual(rules['levels'][-1]['title'], 'Line Legend')
         self.assertEqual(rules['rider_rated_max'], 'Blue')
         keys = [s['key'] for s in rules['sources']]
-        self.assertEqual(keys[:3], ['session', 'attempt', 'mastery'])
+        self.assertEqual(keys[:3], ['first_clean', 'repeat_clean', 'sketchy'])
+        self.assertNotIn('session', keys)  # drill points are switched off
         self.assertIn('descent', keys)
         self.assertIn('jumps', keys)
 

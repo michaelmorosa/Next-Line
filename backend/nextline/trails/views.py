@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from progression import ride_xp
+from progression import feature_points
 from rides import achievements
 
 from .models import Feature, FeatureLog, Outcome, Trail, is_trail_team
@@ -106,14 +106,14 @@ class FeatureViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
         wanted = serializer.validated_data['status']
         today = timezone.localdate()
         if wanted == 'locked':
-            FeatureLog.objects.filter(user=request.user, feature=feature, ridden_on=today).delete()
+            for log in FeatureLog.objects.filter(user=request.user, feature=feature, ridden_on=today):
+                feature_points.delete_log(log)
         else:
-            FeatureLog.objects.create(
+            feature_points.award_log(FeatureLog.objects.create(
                 user=request.user, feature=feature, ridden_on=today, grade_at_log=feature.grade,
                 outcome=Outcome.CLEANED if wanted == 'cleaned' else Outcome.SKETCHY,
                 note=serializer.validated_data.get('note', ''),
-            )
-        ride_xp.award_features(request.user)
+            ))
         feature = features_with_counts(request.user).get(pk=feature.pk)
         context = {'request': request, 'progress': progress_for(request.user, [feature])}
         body = FeatureSerializer(feature, context=context).data

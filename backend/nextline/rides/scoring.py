@@ -8,7 +8,7 @@ from datetime import timedelta
 from django.db.models import Avg, Count, Max, Min, Sum
 from django.utils import timezone
 
-from progression import ride_xp, summary
+from progression import feature_points, ride_xp, summary
 from trails import progress as feature_progress
 from trails.models import Direction
 
@@ -131,7 +131,7 @@ def climbing_trend(user, today=None):
 
 def progress(user):
     achievements.award(user)  # also backfills riders who earned something before it existed
-    ride_xp.award_features(user)  # pays out features certified since the rider cleaned them
+    feature_points.catch_up(user)  # pays out features certified since the rider logged them
     now = timezone.now()
     today = timezone.localdate()
     flow = flow_trend(user, today)

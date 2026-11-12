@@ -125,7 +125,12 @@ class Reason(models.TextChoices):
     RIDE = 'ride', 'Ride'
     DESCENT = 'descent', 'Metres descended'
     JUMPS = 'jumps', 'Jumps'
-    FEATURE = 'feature', 'Feature cleaned'
+    FEATURE = 'feature', 'Feature cleaned (before grades)'
+    FIRST_CLEAN = 'first_clean', 'First clean'
+    REPEAT_CLEAN = 'repeat_clean', 'Repeat clean'
+    SKETCHY = 'sketchy', 'Rode it, sketchy'
+    TRAIL_COMPLETE = 'trail_complete', 'Trail complete'
+    LADDER_COMPLETE = 'ladder_complete', 'Ladder complete'
     PR = 'pr', 'Trail PR'
     CLEAN_CLIMB = 'clean_climb', 'Clean climb'
     AIR = 'air', 'Biggest air'
@@ -134,7 +139,7 @@ class Reason(models.TextChoices):
 
 class LedgerQuerySet(models.QuerySet):
     def update(self, **kwargs):
-        raise TypeError('The XP ledger is append-only. Add a correction entry instead.')
+        raise TypeError('The points ledger is append-only. Add a correction entry instead.')
 
     def delete(self):
         raise TypeError('The XP ledger is append-only. Add a correction entry instead.')
@@ -148,8 +153,12 @@ class XPEntry(models.Model):
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='xp_entries')
     amount = models.IntegerField()
-    reason = models.CharField(max_length=12, choices=Reason.choices)
+    reason = models.CharField(max_length=20, choices=Reason.choices)
     skill_id = models.CharField(max_length=40, blank=True)
+    # For feature points: which feature and which rider log earned it. Plain ids, not foreign keys, so deleting a
+    # log or feature never has to touch the ledger.
+    feature_id = models.PositiveIntegerField(null=True, blank=True, db_index=True)
+    log_id = models.PositiveIntegerField(null=True, blank=True, db_index=True)
     challenge = models.ForeignKey(Challenge, null=True, blank=True, on_delete=models.PROTECT)
     source = models.CharField(max_length=80)
     rules_version = models.PositiveIntegerField()

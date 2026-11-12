@@ -5,7 +5,7 @@ from rest_framework.decorators import action, api_view, throttle_classes
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
-from progression import ride_xp
+from progression import feature_points, ride_xp
 from trails.models import Feature, FeatureLog, Outcome
 
 from . import achievements, level_guide, scoring
@@ -78,7 +78,6 @@ class RideViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Destr
                     log_feature(request.user, feature_id, ride, Outcome.SKETCHY)
             ride.checked_in_at = timezone.now()
             ride.save()
-        ride_xp.award_features(request.user)
         body = self._detail(ride.pk)
         body['new_achievements'] = achievements.describe(achievements.award(request.user))
         return Response(body)
@@ -86,10 +85,12 @@ class RideViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Destr
 
 def log_feature(user, feature_id, ride, outcome):
     feature = Feature.objects.get(pk=feature_id)
-    return FeatureLog.objects.create(
+    log = FeatureLog.objects.create(
         user=user, feature=feature, ride=ride, outcome=outcome, ridden_on=timezone.localdate(ride.started_at),
         logged_at=ride.started_at, grade_at_log=feature.grade,
     )
+    feature_points.award_log(log)
+    return log
 
 
 def apply_cleaned(user, ride, cleaned):
@@ -97,12 +98,13 @@ def apply_cleaned(user, ride, cleaned):
     adds or removes logs instead of adding them again."""
     before = set(ride.cleaned_features)
     for feature_id in cleaned - before:
-        FeatureLog.objects.filter(user=user, feature_id=feature_id, ride=ride).exclude(
-            outcome=Outcome.CLEANED).delete()
+        for log in FeatureLog.objects.filter(user=user, feature_id=feature_id, ride=ride).exclude(
+                outcome=Outcome.CLEANED):
+            feature_points.delete_log(log)
         log_feature(user, feature_id, ride, Outcome.CLEANED)
-    FeatureLog.objects.filter(
-        user=user, ride=ride, feature_id__in=before - cleaned, outcome=Outcome.CLEANED,
-    ).delete()
+    for log in FeatureLog.objects.filter(
+            user=user, ride=ride, feature_id__in=before - cleaned, outcome=Outcome.CLEANED):
+        feature_points.delete_log(log)
     ride.cleaned_features = sorted(cleaned)
 
 

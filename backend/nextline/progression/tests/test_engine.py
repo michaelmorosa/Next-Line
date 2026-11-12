@@ -10,7 +10,9 @@ from progression.state import (
     IN_PROGRESS, LOCKED, MASTERED, READY, missing_for_mastery, newly_ready, next_up, rider_skills, skill_state,
 )
 
-from .helpers import FOUNDATIONS, TODAY, TempMediaMixin, attempt, make_eligible, make_user, master, practise
+from .helpers import (
+    FOUNDATIONS, TODAY, LegacyPointsMixin, TempMediaMixin, attempt, make_eligible, make_user, master, practise,
+)
 
 SMALL_DROPS = {'id': 'small_drops', 'prerequisites': ['roll_offs', 'manual']}
 
@@ -120,7 +122,7 @@ class LedgerTests(TestCase):
         self.assertEqual(xp.award(self.user, Reason.RIDE, 'ride:1', 2).rules_version, content.rules()['version'])
 
 
-class PracticeTests(TempMediaMixin, TestCase):
+class PracticeTests(LegacyPointsMixin, TempMediaMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.user = make_user()
@@ -191,7 +193,7 @@ class PracticeTests(TempMediaMixin, TestCase):
         self.assertEqual(xp.practice_streak(self.user, today=monday + timedelta(days=14)), 0)
 
 
-class MasteryTests(TempMediaMixin, TestCase):
+class MasteryTests(LegacyPointsMixin, TempMediaMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.user = make_user()
@@ -263,7 +265,7 @@ class MasteryTests(TempMediaMixin, TestCase):
         self.assertEqual(next_up(skills, rider_skills(self.user))[0], 'looking_ahead')
 
 
-class ChallengeTests(TempMediaMixin, TestCase):
+class ChallengeTests(LegacyPointsMixin, TempMediaMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.user = make_user()

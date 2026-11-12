@@ -54,3 +54,22 @@ class TempMediaMixin:
         override = override_settings(MEDIA_ROOT=folder)
         override.enable()
         self.addCleanup(override.disable)
+
+
+# Drill, video, mastery and streak points are switched off in rules.json (worth 0) since progression moved to trail
+# features. The code is kept, so its tests run with the values it had.
+LEGACY_XP = {'drill_session': 10, 'attempt_video': 15, 'mastery_per_tier': 100, 'weekly_streak': 25}
+
+
+class LegacyPointsMixin:
+    def setUp(self):
+        super().setUp()
+        import copy
+        from unittest import mock
+
+        from progression import content
+        rules = copy.deepcopy(content.rules())
+        rules['xp'].update(LEGACY_XP)
+        patcher = mock.patch.object(content, 'rules', return_value=rules)
+        patcher.start()
+        self.addCleanup(patcher.stop)

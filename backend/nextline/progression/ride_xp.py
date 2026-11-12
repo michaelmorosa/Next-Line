@@ -1,15 +1,16 @@
-"""XP from riding: the ride itself, metres descended, jumps, PRs, biggest air, clean climbs and cleaned features.
+"""Points from riding: the ride itself, metres descended, jumps, PRs, biggest air and clean climbs. Feature points
+are in feature_points; a ride's summary includes the ones from logs made in its check-in.
 
 Ride entries have sources starting 'ride:<id>' and are dated when the ride started, so deleting a ride can undo
-exactly what it earned, and daily caps group by the day ridden. award_ride() and award_features() are safe to run
-any number of times, which is how backfill_xp works.
+exactly what it earned, and daily caps group by the day ridden. award_ride() is safe to run any number of times,
+which is how backfill_xp works.
 """
 from datetime import timedelta
 
-from django.db.models import Min, Sum
+from django.db.models import Sum
 
 from rides.models import Ride, TrailEffort
-from trails.models import Direction, Feature, FeatureLog, Outcome, trusted_weight
+from trails.models import Direction, trusted_weight
 
 from . import content, xp
 from .models import Reason, XPEntry
@@ -69,35 +70,11 @@ def undo_ride(ride):
         xp.award(ride.user, Reason.CORRECTION, f'undo:{entry.source}', -entry.amount, skill_id=entry.skill_id)
 
 
-def award_features(user):
-    """XP for every live feature the rider has cleaned and not been paid for yet, weighted by the trail's trusted
-    difficulty. Drafts pay out once they're certified."""
-    per_weight = content.rules()['xp']['feature_cleaned_per_weight']
-    cleaned = (
-        FeatureLog.objects.filter(user=user, outcome=Outcome.CLEANED, feature__in=Feature.objects.live())
-        .values('feature_id', 'feature__trail__difficulty', 'feature__trail__owner_id').annotate(first=Min('logged_at'))
-    )
-    paid = set(XPEntry.objects.filter(user=user, reason=Reason.FEATURE).values_list('source', flat=True))
-    awards = []
-    for row in cleaned:
-        source = f"feature:{row['feature_id']}"
-        if source in paid:
-            continue
-        amount = round(per_weight * trusted_weight(row['feature__trail__difficulty'], row['feature__trail__owner_id']))
-        awards.append(xp.award(user, Reason.FEATURE, source, amount, at=row['first']))
-    return [a for a in awards if a]
-
-
 def ride_xp(ride):
     """What a ride earned, for the ride summary: {xp, items: [{label, amount}], level_before, level, leveled_up}."""
     entries = list(XPEntry.objects.filter(user=ride.user, source__startswith=ride_source(ride) + ':'))
     entries += XPEntry.objects.filter(user=ride.user, source=ride_source(ride))
-    first_cleaned = [
-        row['feature_id'] for row in FeatureLog.objects.filter(
-            user=ride.user, outcome=Outcome.CLEANED, feature_id__in=ride.cleaned_features,
-        ).values('feature_id').annotate(first=Min('logged_at')) if row['first'] == ride.started_at
-    ]
-    entries += XPEntry.objects.filter(user=ride.user, source__in=[f'feature:{f}' for f in first_cleaned])
+    entries += XPEntry.objects.filter(user=ride.user, log_id__in=ride.feature_logs.values_list('id', flat=True))
     gained = sum(e.amount for e in entries)
     master = xp.is_master(ride.user)
     before = xp.level_for(xp.total_xp(ride.user, until=ride.started_at - timedelta(microseconds=1)), master=master)

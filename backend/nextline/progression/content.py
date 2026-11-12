@@ -22,10 +22,18 @@ TAG_TYPES = {
 }
 FEATURE_TAGS = set(TAG_TYPES)
 XP_KEYS = (
+    'first_clean_per_grade', 'repeat_clean', 'sketchy_per_grade', 'walked', 'trail_complete', 'ladder_complete',
     'drill_session', 'attempt_video', 'mastery_per_tier', 'challenge_complete', 'weekly_streak', 'ride',
-    'feature_cleaned_per_weight', 'trail_pr', 'clean_climb_per_weight', 'biggest_air', 'descent_per_100m', 'jump',
+    'trail_pr', 'clean_climb_per_weight', 'biggest_air', 'descent_per_100m', 'jump',
 )
-CAP_KEYS = ('drill_sessions_per_skill_per_day', 'attempt_videos_per_skill_per_day', 'descent_xp_per_day', 'jump_xp_per_day')
+CAP_KEYS = (
+    'repeat_cleans_per_feature_per_week', 'drill_sessions_per_skill_per_day', 'attempt_videos_per_skill_per_day',
+    'descent_xp_per_day', 'jump_xp_per_day',
+)
+POSITIVE_KEYS = (
+    ('bonuses', 'min_features'), ('next_up', 'max_suggestions'), ('next_up', 'repeat_cleans_needed'),
+    ('next_up', 'advanced_above_grade'), ('verification', 'stale_after_months'),
+)
 GOAL_TYPES = ('sessions', 'master')
 
 
@@ -150,6 +158,12 @@ def validate_rules(rules):
             value = rules.get(section, {}).get(key)
             if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 errors.append(f'rules.json: {section}.{key} must be a whole number, 0 or more')
+    for section, key in POSITIVE_KEYS:
+        value = rules.get(section, {}).get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+            errors.append(f'rules.json: {section}.{key} must be a whole number, 1 or more')
+    if not isinstance(rules.get('verification', {}).get('second_reviewer_required'), bool):
+        errors.append('rules.json: verification.second_reviewer_required must be true or false')
     mastery = rules.get('mastery', {})
     for key in ('min_sessions', 'min_practice_days', 'min_videos'):
         if not isinstance(mastery.get(key), int) or mastery[key] < 0:
