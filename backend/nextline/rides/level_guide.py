@@ -7,49 +7,20 @@ from progression.models import Reason
 from trails.models import (
     DIFFICULTY_WEIGHT, RIDER_RATED_MAX, Difficulty, Direction, Trail, trusted_weight,
 )
-from trails import progress as feature_progress
-from trails.views import features_with_counts
 
 from . import scoring
 from .models import TrailEffort
 
-SUGGESTED_FEATURES = 3
 # Air suggestion: how much more airtime to aim for, and the biggest air worth suggesting it below.
 AIR_STEP_S = 0.1
 AIR_SUGGEST_BELOW_S = 1.0
 
 
-def feature_xp(feature):
-    """Points for a first clean of this feature."""
-    return content.rules()['xp']['first_clean_per_grade'] * (feature.grade or 0)
-
-
 def suggestions(user):
-    """A few concrete trail goals, most useful first: [{kind, title, detail, xp, trail}]. Skill goals are in the
-    dashboard's next-up list."""
+    """Riding goals beside next up (which suggests features): a climb without a dab, a PR, more air.
+    [{kind, title, detail, xp, trail}]"""
     values = content.rules()['xp']
     out = []
-    status = {fid: st.status for fid, st in feature_progress.states(user).items()}
-    ridden = set(TrailEffort.objects.filter(user=user).values_list('trail_id', flat=True))
-    features = [
-        f for f in features_with_counts(user).live().select_related('trail')
-        if status.get(f.id) != 'cleaned'
-    ]
-
-    def rank(f):
-        # Ones you've almost got first, then trails you ride, then what others manage, then the most XP.
-        return (status.get(f.id) != 'sketchy', f.trail_id not in ridden, -f.riders_cleaned,
-                -feature_xp(f))
-
-    for f in sorted(features, key=rank)[:SUGGESTED_FEATURES]:
-        notes = [f'on {f.trail.name}']
-        if status.get(f.id) == 'sketchy':
-            notes.append("you've almost got it")
-        if f.riders_cleaned:
-            notes.append(f"{f.riders_cleaned} rider{'s' if f.riders_cleaned != 1 else ''} cleaned it")
-        out.append({'kind': 'feature', 'title': f'Clean {f.name}', 'detail': ' · '.join(notes),
-                    'xp': feature_xp(f), 'trail': f.trail_id})
-
     climbs = (
         TrailEffort.objects.filter(user=user, trail__direction=Direction.CLIMB).values('trail_id', 'trail__name')
         .annotate(fewest=Min('touchdowns')).filter(fewest__gt=0).order_by('fewest').first()

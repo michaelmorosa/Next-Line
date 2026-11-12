@@ -64,24 +64,6 @@ class TrailApiTests(TestCase):
         self.assertEqual(len(res.data['efforts']), 1)
         self.assertEqual(res.data['direction'], 'descent')
 
-    def test_only_the_trail_team_adds_features(self):
-        upload(self.client)
-        trail = descent_trail()
-        Trail.objects.filter(pk=trail.pk).update(owner=None)
-        lat, lng = trail.path[5]
-        body = {'name': 'Rock garden', 'type': 'rock_garden', 'lat': lat, 'lng': lng}
-        self.assertEqual(self.client.post(f'/api/trails/{trail.id}/features/', body, format='json').status_code, 403)
-        team = APIClient()
-        team.force_authenticate(team_member())
-        res = team.post(f'/api/trails/{trail.id}/features/', body, format='json')
-        self.assertEqual(res.status_code, 201, res.data)
-        self.assertEqual((res.data['certification'], res.data['position']), ('draft', 1))
-        # Drafts are team-only.
-        self.assertEqual(self.client.get(f'/api/trails/{trail.id}/').data['features'], [])
-        far = team.post(f'/api/trails/{trail.id}/features/', {'name': 'Nope', 'lat': lat + 0.01, 'lng': lng},
-                        format='json')
-        self.assertEqual(far.status_code, 400)
-
     def test_set_feature_progress(self):
         upload(self.client)
         trail = descent_trail()

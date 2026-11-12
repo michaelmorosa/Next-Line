@@ -7,7 +7,7 @@ class AccountFlowTests(TestCase):
         client = APIClient()
         res = client.post('/api/auth/users/', {
             'username': 'shredder', 'email': 'shred@example.com',
-            'password': 'gnarly-line-42', 're_password': 'gnarly-line-42',
+            'password': 'gnarly-line-42', 're_password': 'gnarly-line-42', 'accepted_safety': True,
         }, format='json')
         self.assertEqual(res.status_code, 201, res.data)
 
@@ -27,7 +27,8 @@ class AccountFlowTests(TestCase):
 
     def test_duplicate_email_rejected(self):
         client = APIClient()
-        body = {'username': 'a', 'email': 'dup@example.com', 'password': 'gnarly-line-42', 're_password': 'gnarly-line-42'}
+        body = {'username': 'a', 'email': 'dup@example.com', 'password': 'gnarly-line-42', 're_password': 'gnarly-line-42',
+                'accepted_safety': True}
         client.post('/api/auth/users/', body, format='json')
         res = client.post('/api/auth/users/', {**body, 'username': 'b', 'email': 'DUP@example.com'}, format='json')
         self.assertEqual(res.status_code, 400)

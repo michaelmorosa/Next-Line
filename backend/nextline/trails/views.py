@@ -11,10 +11,10 @@ from progression import feature_points
 from rides import achievements
 
 from . import certification
-from .models import Feature, FeatureLog, Outcome, Trail, is_trail_team
+from .models import Feature, FeatureLog, Outcome, Trail
 from .serializers import (
-    FeatureProgressSerializer, FeatureSerializer, TrailDetailSerializer, TrailListSerializer,
-    TrailUpdateSerializer, progress_for,
+    FeatureProgressSerializer, FeatureSerializer, TrailDetailSerializer, TrailListSerializer, TrailUpdateSerializer,
+    progress_for,
 )
 
 # Auto trails show up once ridden this many full laps, so one-off descents don't clutter the list.
@@ -77,27 +77,12 @@ class TrailViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Upda
             raise PermissionDenied("Only your own auto-detected trails can be renamed.")
         serializer.save()
 
-    @action(detail=True, methods=['post'])
-    def features(self, request, pk=None):
-        """The trail team adds a draft feature. Riders report changes instead of adding features."""
-        if not is_trail_team(request.user):
-            raise PermissionDenied('Features are added by the Next Line trail team.')
-        trail = get_object_or_404(Trail.objects.filter(owner__isnull=True), pk=pk)
-        serializer = FeatureSerializer(data=request.data, context={'request': request, 'trail': trail})
-        serializer.is_valid(raise_exception=True)
-        position = (trail.features.aggregate(m=Max('position'))['m'] or 0) + 1
-        feature = serializer.save(trail=trail, created_by=request.user, position=position)
-        return Response(FeatureSerializer(feature, context={'request': request}).data, status=status.HTTP_201_CREATED)
 
+class FeatureViewSet(viewsets.GenericViewSet):
+    """Actions on a feature. The feature page and logging are in rider.py; the team's tools in team.py."""
 
-class FeatureViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
     def get_queryset(self):
-        return Feature.objects.visible_to(self.request.user)
-
-    def perform_destroy(self, instance):
-        if not is_trail_team(self.request.user) or instance.is_live:
-            raise PermissionDenied('Only the trail team can remove draft features.')
-        instance.delete()
+        return Feature.objects.live()
 
     @action(detail=True, methods=['put'])
     def progress(self, request, pk=None):

@@ -105,6 +105,11 @@ class CaptureTests(TeamTestCase):
         order = list(Feature.objects.order_by('position').values_list('id', flat=True))
         self.assertEqual(order, [top, middle, bottom])
 
+    def test_point_must_be_near_the_chosen_trail(self):
+        res = self.capture(trail=self.trail.id, lat=45.01)
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('150 m', str(res.data))
+
     def test_riders_cannot_use_the_team_api(self):
         self.assertEqual(self.capture(client=self.rider_client).status_code, 403)
         self.assertEqual(self.rider_client.get('/api/team/features/').status_code, 403)
@@ -294,6 +299,9 @@ class LadderAndAdminTests(TeamTestCase):
         messages = [w['message'] for w in certification.ladder_warnings(self.system)]
         self.assertIn('Drop: no grade 3, 4 between 2 and 5. Riders will stall at 2.', messages)
         self.assertIn('Ungraded has no grade yet.', messages)
+        Feature.objects.filter(grade=1).delete()
+        messages = [w['message'] for w in certification.ladder_warnings(self.system)]
+        self.assertIn('Drop: the ladder starts at grade 2. Riders new to drops only get grade 1 suggested.', messages)
 
     def test_bulk_trail_view_reorders(self):
         a = Feature.objects.create(trail=self.trail, name='A', type='drop', grade=1, lat=45, lng=-122, position=1)

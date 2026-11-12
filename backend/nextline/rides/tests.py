@@ -532,21 +532,16 @@ class ProgressTests(TestCase):
         res = self.client.post(f"/api/rides/{ride['id']}/checkin/", {'cleaned': [feature.id]}, format='json')
         self.assertEqual({i['label']: i['amount'] for i in res.data['xp']['items']}['First clean'], 40)  # 20 x grade 2
 
-    def test_suggestions_with_xp(self):
+    def test_progress_has_next_up_features(self):
         upload(self.client)
         ridden = descent_trail()
         Trail.objects.filter(pk=ridden.pk).update(owner=None)
-        Feature.objects.create(trail=ridden, name='Easy drop', lat=ridden.path[3][0], lng=ridden.path[3][1],
-                               status='certified', grade=1)
-        shared = Trail.objects.create(name='Rattlesnake DH', difficulty='black', start_lat=0, start_lng=0, end_lat=0,
-                                      end_lng=0, length_m=1)
-        rock = Feature.objects.create(trail=shared, name='Rock garden', lat=0, lng=0, status='certified', grade=4)
-        FeatureLog.objects.create(user=self.user, feature=rock, outcome='sketchy', ridden_on=timezone.localdate())
-        suggestions = self.client.get('/api/progress/').data['suggestions']
-        self.assertEqual(suggestions[0]['title'], 'Clean Rock garden')  # almost got it
-        self.assertEqual(suggestions[0]['xp'], 80)
-        self.assertEqual(rock.trail_id, suggestions[0]['trail'])
-        self.assertIn('Clean Easy drop', [s['title'] for s in suggestions])
+        Feature.objects.create(trail=ridden, name='Roll-down', type='drop', lat=ridden.path[3][0],
+                               lng=ridden.path[3][1], status='certified', grade=1)
+        data = self.client.get('/api/progress/').data
+        self.assertEqual([f['name'] for f in data['features']['next_up']], ['Roll-down'])
+        # Riding goals stay in suggestions; features come from next up.
+        self.assertNotIn('feature', [s['kind'] for s in data['suggestions']])
 
     def test_level_rules(self):
         rules = self.client.get('/api/level-rules/').data

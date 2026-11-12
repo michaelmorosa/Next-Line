@@ -261,9 +261,13 @@ def ladder_warnings(system, features=None):
         by_type.setdefault(f.type, set()).add(f.grade)
     for type_, grades in sorted(by_type.items()):
         ordered = sorted(grades)
+        label = type_.replace('_', ' ').capitalize()
+        if ordered[0] > 1:
+            warnings.append({'type': type_, 'message': f'{label}: the ladder starts at grade {ordered[0]}. Riders '
+                                                       f'new to {label.lower()}s only get grade 1 suggested.'})
         for low, high in zip(ordered, ordered[1:]):
             if high - low > 1:
                 missing = ', '.join(str(g) for g in range(low + 1, high))
-                warnings.append({'type': type_, 'message': f'{type_.replace("_", " ").capitalize()}: no grade {missing} '
-                                                           f'between {low} and {high}. Riders will stall at {low}.'})
+                warnings.append({'type': type_, 'message': f'{label}: no grade {missing} between {low} and {high}. '
+                                                           f'Riders will stall at {low}.'})
     return warnings

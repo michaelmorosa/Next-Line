@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
 from progression import feature_points, ride_xp
+from trails import rider
 from trails.models import Feature, FeatureLog, Outcome
 
 from . import achievements, level_guide, scoring
@@ -132,6 +133,7 @@ def crash_alert(request):
 def progress(request):
     data = scoring.progress(request.user)
     data['suggestions'] = level_guide.suggestions(request.user)
+    data['features'] = rider.dashboard(request)
     return Response(data)
 
 
