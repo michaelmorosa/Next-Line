@@ -8,8 +8,10 @@ import { Button, ErrorState, Header, Loading, ProgressBar } from '../components/
 import { dateOnly } from '../utils/format';
 import { colors, ui } from '../theme';
 
+// The server describes each goal; older servers didn't, for the skill goals.
 function goalText(c) {
-  const skills = c.skills.map((s) => s.name).join(' or ');
+  if (c.goal_text) return c.goal_text;
+  const skills = (c.skills || []).map((s) => s.name).join(' or ');
   return c.goal_type === 'sessions'
     ? `Log ${c.goal_count} ${skills} session${c.goal_count === 1 ? '' : 's'}`
     : `Master ${skills}`;
@@ -57,7 +59,7 @@ export default function ChallengesScreen() {
         <View key={c.id} style={ui.card}>
           <View style={ui.between}>
             <Text style={[ui.strong, { fontSize: 17, flex: 1 }]}>{c.title}</Text>
-            <Text style={[ui.small, { color: colors.good }]}>+{c.xp} XP</Text>
+            <Text style={[ui.small, { color: colors.good }]}>+{c.xp} pts</Text>
           </View>
           <Text style={ui.body}>{goalText(c)}</Text>
           {c.description ? <Text style={ui.small}>{c.description}</Text> : null}
@@ -70,9 +72,8 @@ export default function ChallengesScreen() {
               <Text style={[ui.strong, c.completed_at && { color: colors.good }]}>
                 {c.completed_at ? 'Complete!' : `${c.progress} of ${c.goal_count}`}
               </Text>
-              {!c.completed_at && c.skills[0] && (
-                <Button title={`Practise ${c.skills[0].name}`} variant="secondary"
-                  onPress={() => navigation.navigate('Skill', { id: c.skills[0].id })} />
+              {!c.completed_at && (
+                <Button title="See what's next up" variant="secondary" onPress={() => navigation.navigate('NextUp')} />
               )}
             </>
           ) : (
@@ -80,7 +81,7 @@ export default function ChallengesScreen() {
           )}
         </View>
       ))}
-      <Text style={ui.small}>Only practice logged after you join counts toward a challenge.</Text>
+      <Text style={ui.small}>Only features you log after you join count toward a challenge.</Text>
     </ScrollView>
   );
 }

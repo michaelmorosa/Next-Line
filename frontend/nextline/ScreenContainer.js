@@ -9,7 +9,7 @@ const TABS = [
   { route: 'Rides', label: 'Rides', icon: 'pulse' },
   { route: 'Record', label: 'Record', icon: 'radio-button-on' },
   { route: 'Trails', label: 'Trails', icon: 'triangle' },
-  { route: 'Skills', label: 'Skills', icon: 'git-network' },
+  { route: 'NextUp', label: 'Next up', icon: 'trending-up' },
   { route: 'Progress', label: 'Progress', icon: 'bar-chart' },
 ];
 
@@ -17,8 +17,9 @@ const TABS = [
 const TAB_FOR_ROUTE = {
   Rides: 'Rides', RideSummary: 'Rides', Settings: 'Rides', SensorLab: 'Rides',
   Record: 'Record',
-  Trails: 'Trails', Trail: 'Trails', PinFeature: 'Trails',
-  Skills: 'Skills', Skill: 'Skills', Mastery: 'Skills',
+  Trails: 'Trails', System: 'Trails', TrailFeatures: 'Trails', Feature: 'Trails', LogTrail: 'Trails',
+  Ladders: 'Trails', TimedTrails: 'Trails', Trail: 'Trails', Safety: 'Trails',
+  NextUp: 'NextUp',
   Progress: 'Progress', LevelGuide: 'Progress', XPHistory: 'Progress', Challenges: 'Progress',
 };
 

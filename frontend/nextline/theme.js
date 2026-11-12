@@ -33,12 +33,25 @@ export const DIFFICULTY = {
   double_black: { label: 'Double black', color: colors.text },
 };
 
-// Skill tree states, from the server: mastered, in progress (practice logged), ready (prerequisites mastered), locked.
-export const SKILL_STATE = {
-  mastered: { label: 'Mastered', color: colors.accent, icon: 'checkmark-circle' },
-  in_progress: { label: 'In progress', color: colors.accent, icon: 'ellipsis-horizontal-circle' },
-  ready: { label: 'Ready', color: colors.text, icon: 'radio-button-off' },
-  locked: { label: 'Locked', color: colors.muted, icon: 'lock-closed' },
+// A rider's status on a feature, from the server: cleaned, sketchy, walked or not_yet.
+export const STATUS_COLORS = {
+  cleaned: colors.good,
+  sketchy: colors.warn,
+  walked: colors.muted,
+  not_yet: colors.dotMuted,
+};
+
+// Ionicons for each feature type.
+export const TYPE_ICONS = {
+  drop: 'arrow-down-circle',
+  jump: 'airplane',
+  corner: 'return-up-forward',
+  rock_garden: 'grid',
+  roots: 'git-branch',
+  steep: 'trending-down',
+  skinny: 'remove',
+  climb: 'trending-up',
+  other: 'flag',
 };
 
 export const ui = StyleSheet.create({

@@ -75,7 +75,7 @@ export function dateOnly(ymd) {
   return shortDate(new Date(y, m - 1, d).toISOString());
 }
 
-// "+10 XP", "−5 XP".
+// "+10 pts", "−5 pts". (Named xp from when points were called XP.)
 export function xp(amount) {
-  return `${amount < 0 ? '−' : '+'}${Math.abs(amount).toLocaleString()} XP`;
+  return `${amount < 0 ? '−' : '+'}${Math.abs(amount).toLocaleString()} pts`;
 }

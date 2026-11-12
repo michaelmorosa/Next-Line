@@ -3,7 +3,7 @@ import { FlatList, RefreshControl, Text, TouchableOpacity, View } from 'react-na
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { fetchJson } from '../api';
 import { useAuth } from '../AuthContext';
-import { ErrorState, Loading, ProgressBar } from '../components/ui';
+import { ErrorState, Header, Loading, ProgressBar } from '../components/ui';
 import { directionLabel, duration, km } from '../utils/format';
 import { DIFFICULTY, colors, ui } from '../theme';
 
@@ -37,7 +37,8 @@ export default function TrailsScreen() {
         onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
       ListHeaderComponent={(
         <View style={{ gap: 4, marginBottom: 2 }}>
-          <Text style={ui.title}>Trails</Text>
+          <Header caption="Trails" />
+          <Text style={ui.title}>Timed trails</Text>
           <Text style={ui.subtitle}>Descents and climbs you ride more than once become timed segments automatically.</Text>
         </View>
       )}

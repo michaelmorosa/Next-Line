@@ -1,4 +1,4 @@
-// Every XP award, newest first, from the ledger.
+// Every points award, newest first, from the ledger.
 import { useCallback, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -54,13 +54,13 @@ export default function XPHistoryScreen() {
       keyExtractor={(e) => String(e.id)}
       ListHeaderComponent={(
         <View style={{ gap: 14 }}>
-          <Header caption="XP history" />
-          <Text style={ui.title}>XP history</Text>
+          <Header caption="Points" />
+          <Text style={ui.title}>Points history</Text>
           <View style={ui.card}><LevelBar level={page.level} streakWeeks={page.streak_weeks} /></View>
         </View>
       )}
       renderItem={({ item }) => <View style={[ui.card, { paddingVertical: 12 }]}><XPRow entry={item} /></View>}
-      ListEmptyComponent={<Text style={ui.small}>No XP yet. Log a drill session on the Skills tab or go for a ride.</Text>}
+      ListEmptyComponent={<Text style={ui.small}>No points yet. Log the features you ride, or go for a ride.</Text>}
       ListFooterComponent={loadingMore ? <Text style={[ui.small, { textAlign: 'center', color: colors.muted }]}>Loading…</Text> : null}
       onEndReached={more}
       onEndReachedThreshold={0.5}

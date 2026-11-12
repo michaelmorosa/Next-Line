@@ -6,15 +6,16 @@ import { fetchJson } from '../api';
 import { useAuth } from '../AuthContext';
 import Sparkline from '../components/Sparkline';
 import SuggestionRow from '../components/SuggestionRow';
-import XPRow from '../components/XPRow';
+import NextUpList from '../components/NextUpList';
 import { ErrorState, Grid, Loading, ProgressBar, StatTile } from '../components/ui';
-import { climbRate, delta, duration } from '../utils/format';
-import { SKILL_STATE, colors, fonts, ui } from '../theme';
+import { outcomeLabel, points } from '../utils/features';
+import { climbRate, dateOnly, delta, duration } from '../utils/format';
+import { STATUS_COLORS, TYPE_ICONS, colors, fonts, ui } from '../theme';
 
 // Achievements earned this recently get a NEW tag.
 const NEW_ACHIEVEMENT_MS = 7 * 86400000;
 
-const XP_SHOWN = 5;
+const RECENT_SHOWN = 5;
 
 // Weekly bars for one value of `weeks` (latest week highlighted). Empty weeks get a stub.
 function WeekBars({ weeks, field = 'flow' }) {
@@ -59,13 +60,12 @@ export default function ProgressScreen() {
 
   if (!data && error) return <ErrorState message={error} onRetry={load} />;
   if (!data) return <Loading />;
-  // Servers older than the XP system send a level without totals.
-  if (data.level?.total == null || !data.skills) {
-    return <ErrorState message="The server needs updating for XP and skills." onRetry={load} />;
+  // Servers from before graded features don't send the features section.
+  if (data.level?.total == null || !data.features) {
+    return <ErrorState message="The server needs updating for trail features." onRetry={load} />;
   }
 
-  const { level, totals, favorite_trail: fav, favorite_climb: favClimb } = data;
-  // Missing from servers older than climb tracking.
+  const { level, totals, favorite_trail: fav, favorite_climb: favClimb, features } = data;
   const climbing = data.climbing || { weeks: [], latest: null, best_climb_rate: null, longest_nonstop_m: 0 };
   const hasFlow = data.flow_weeks.some((w) => w.flow != null);
   const achievementList = data.achievements || [];
@@ -73,6 +73,7 @@ export default function ProgressScreen() {
   const earned = achievementList.filter((a) => a.earned_at);
   const locked = achievementList.filter((a) => !a.earned_at);
   const hasClimbing = climbing.weeks.some((w) => w.climb_rate != null);
+  const { strongest, weakest } = features.strengths;
 
   return (
     <ScrollView
@@ -91,9 +92,9 @@ export default function ProgressScreen() {
           </View>
           <View style={{ alignItems: 'flex-end', gap: 4, flexShrink: 1 }}>
             <Text style={[ui.strong, { fontSize: 18, color: colors.accent }]}>{level.title}</Text>
-            <Text style={ui.small}>{level.total.toLocaleString()} XP</Text>
+            <Text style={ui.small}>{level.total.toLocaleString()} points</Text>
             <Text style={[ui.small, { color: level.gain_30d > 0 ? colors.good : colors.muted }]}>
-              {level.gain_30d > 0 ? `+${level.gain_30d.toLocaleString()} in 30 days` : 'Practise to level up'}
+              {level.gain_30d > 0 ? `+${level.gain_30d.toLocaleString()} in 30 days` : 'Log a ride to level up'}
             </Text>
           </View>
         </View>
@@ -101,36 +102,74 @@ export default function ProgressScreen() {
         <Text style={ui.small}>
           {level.to_next == null
             ? 'Top level'
-            : `${level.to_next.toLocaleString()} XP to level ${level.level + 1}${level.next_title !== level.title ? ` · ${level.next_title}` : ''}`}
+            : `${level.to_next.toLocaleString()} points to level ${level.level + 1}${level.next_title !== level.title ? ` · ${level.next_title}` : ''}`}
         </Text>
-        <Text style={[ui.small, { color: colors.accent }]}>How rider level works ›</Text>
+        <Text style={[ui.small, { color: colors.accent }]}>How points work ›</Text>
       </TouchableOpacity>
 
-      <Grid columns={3}>
-        <StatTile value={`${data.practice_streak_weeks} wk`} sub="practice streak" center small />
-        <StatTile value={`${data.skills.mastered}/${data.skills.total}`} sub="skills mastered" center small />
-        <StatTile value={data.skills.in_progress} sub="in progress" center small />
-      </Grid>
+      <View style={ui.card}>
+        <View style={ui.between}>
+          <Text style={ui.label}>Next up when you're ready</Text>
+          <Text style={[ui.small, { color: colors.accent }]} onPress={() => navigation.navigate('NextUp')}>All ›</Text>
+        </View>
+        <NextUpList items={features.next_up.slice(0, 2)} />
+      </View>
 
-      {data.skills.next_up.length > 0 && (
+      <View style={ui.card}>
+        <View style={ui.between}>
+          <Text style={ui.label}>Features cleaned</Text>
+          <Text style={[ui.number, { fontSize: 26 }]}>{features.features_cleaned}</Text>
+        </View>
+        {features.cleaned_by_type.length === 0 && (
+          <Text style={ui.small}>Log the features you ride from any trail page. Cleans show up here by type.</Text>
+        )}
+        {features.cleaned_by_type.map((t) => (
+          <View key={t.type} style={ui.between}>
+            <View style={[ui.row, { gap: 8 }]}>
+              <Ionicons name={TYPE_ICONS[t.type] || 'flag'} size={16} color={colors.muted} />
+              <Text style={ui.body}>{t.label}</Text>
+            </View>
+            <Text style={ui.small}>{t.cleaned} cleaned · best grade {t.best_grade}</Text>
+          </View>
+        ))}
+      </View>
+
+      {(strongest || weakest) && (
+        <View style={ui.card}>
+          <Text style={ui.label}>Strengths</Text>
+          {strongest && (
+            <View style={{ gap: 2 }}>
+              <Text style={ui.strong}>Strongest: {strongest.name}</Text>
+              <Text style={ui.small}>You clean {strongest.score}% of what you try here, weighted by grade.</Text>
+            </View>
+          )}
+          {weakest && (
+            <View style={{ gap: 2 }}>
+              <Text style={ui.strong}>Most room to grow: {weakest.name}</Text>
+              <Text style={ui.small}>
+                {weakest.score}% so far. Look for "Stuck?" tips on {weakest.skills.slice(0, 2).map((s) => s.name.toLowerCase()).join(' and ')} on feature pages.
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {features.recent.length > 0 && (
         <View style={ui.card}>
           <View style={ui.between}>
-            <Text style={ui.label}>Next up</Text>
-            <Text style={[ui.small, { color: colors.accent }]} onPress={() => navigation.navigate('Skills')}>Skill tree ›</Text>
+            <Text style={ui.label}>Recent activity</Text>
+            <Text style={[ui.small, { color: colors.accent }]} onPress={() => navigation.navigate('XPHistory')}>Points ›</Text>
           </View>
-          {data.skills.next_up.map((s) => (
-            <TouchableOpacity key={s.id} style={[ui.row, { alignItems: 'flex-start' }]}
-              onPress={() => navigation.navigate('Skill', { id: s.id })}>
-              <Ionicons name={SKILL_STATE[s.state].icon} size={18} color={colors.accent} style={{ marginTop: 2 }} />
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={ui.strong}>{s.name}</Text>
-                <Text style={ui.small}>
-                  {s.state === 'in_progress'
-                    ? (s.missing.length ? `Needs ${s.missing.join(', ')}` : 'Ready for the mastery test')
-                    : `Tier ${s.tier} · ready to learn`}
-                </Text>
+          {features.recent.slice(0, RECENT_SHOWN).map((r) => (
+            <TouchableOpacity key={r.id} style={ui.between} onPress={() => navigation.navigate('Feature', { id: r.feature })}>
+              <View style={[ui.row, { gap: 8, flex: 1 }]}>
+                <View style={[styles.dot, { backgroundColor: STATUS_COLORS[r.outcome] }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={ui.body} numberOfLines={1}>{r.feature_name}</Text>
+                  <Text style={ui.small} numberOfLines={1}>{outcomeLabel(r.outcome)} · {r.trail_name} · {dateOnly(r.ridden_on)}</Text>
+                </View>
               </View>
-              <Text style={{ fontFamily: fonts.semibold, fontSize: 14, color: colors.good }}>+{s.xp} XP</Text>
+              {r.points !== 0 && <Text style={[ui.small, { color: colors.good }]}>{points(r.points)}</Text>}
             </TouchableOpacity>
           ))}
         </View>
@@ -156,22 +195,9 @@ export default function ProgressScreen() {
         </TouchableOpacity>
       )}
 
-      {data.recent_xp.length > 0 && (
-        <View style={ui.card}>
-          <View style={ui.between}>
-            <Text style={ui.label}>Recent XP</Text>
-            <Text style={[ui.small, { color: colors.accent }]} onPress={() => navigation.navigate('XPHistory')}>History ›</Text>
-          </View>
-          {data.recent_xp.slice(0, XP_SHOWN).map((e) => <XPRow key={e.id} entry={e} />)}
-        </View>
-      )}
-
       {suggestions.length > 0 && (
         <View style={ui.card}>
-          <View style={ui.between}>
-            <Text style={ui.label}>Ways to level up</Text>
-            <Text style={[ui.small, { color: colors.accent }]} onPress={() => navigation.navigate('LevelGuide')}>All ›</Text>
-          </View>
+          <Text style={ui.label}>Riding goals</Text>
           {suggestions.slice(0, 3).map((s) => <SuggestionRow key={`${s.kind}-${s.title}`} suggestion={s} />)}
         </View>
       )}
@@ -238,7 +264,7 @@ export default function ProgressScreen() {
       )}
 
       <Grid columns={3}>
-        <StatTile value={totals.features_cleaned} sub="features cleaned" center small />
+        <StatTile value={totals.rides} sub="rides" center small />
         <StatTile value={`${Math.round(totals.air_this_month_s)} s`} sub="air this month" center small />
         <StatTile value={`${totals.streak_weeks} wk`} sub="ride streak" center small />
       </Grid>
@@ -289,6 +315,7 @@ const styles = StyleSheet.create({
   barValue: { fontFamily: fonts.regular, fontSize: 11, color: colors.muted },
   bar: { width: '100%', borderTopLeftRadius: 4, borderTopRightRadius: 4 },
   milestoneDot: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.warn },
+  dot: { width: 10, height: 10, borderRadius: 5 },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   badge: {
     width: '48.5%', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border, gap: 4, opacity: 0.55,

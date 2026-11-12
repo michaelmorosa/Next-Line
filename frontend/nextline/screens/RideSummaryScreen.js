@@ -8,15 +8,8 @@ import { useAuth } from '../AuthContext';
 import FlowRing from '../components/FlowRing';
 import RideMap from '../components/RideMap';
 import { Button, CircleButton, ErrorState, Grid, Header, Loading, ProgressBar, StatTile } from '../components/ui';
-import { climbRate, day, delta, duration, feetDown, km, metres, seconds, shortDuration, xp } from '../utils/format';
+import { climbRate, day, delta, duration, feetDown, km, localDay, metres, seconds, shortDuration, xp } from '../utils/format';
 import { colors, fonts, ui } from '../theme';
-
-const NEXT_STATUS = { locked: 'almost', almost: 'cleaned', cleaned: 'locked' };
-const STATUS_STYLE = {
-  cleaned: { dot: colors.good, mark: '✓', label: 'Cleaned' },
-  almost: { dot: colors.warn, mark: '!', label: 'Almost' },
-  locked: { dot: colors.dotMuted, mark: '', label: 'Not this time' },
-};
 
 function shareText(ride) {
   const lines = [`${ride.title || 'Ride'} · ${day(ride.started_at)}`];
@@ -74,16 +67,12 @@ export default function RideSummaryScreen() {
   const { logout } = useAuth();
   const [ride, setRide] = useState(null);
   const [error, setError] = useState(null);
-  const [checkin, setCheckin] = useState({ confidence: null, crashed: false, touchdowns: 0, statuses: {} });
+  const [checkin, setCheckin] = useState({ confidence: null, crashed: false, touchdowns: 0 });
   const [saving, setSaving] = useState(false);
 
   const apply = (data) => {
     setRide(data);
-    const statuses = {};
-    for (const f of data.features) {
-      statuses[f.id] = data.cleaned_features.includes(f.id) ? 'cleaned' : (f.status === 'almost' ? 'almost' : 'locked');
-    }
-    setCheckin({ confidence: data.confidence, crashed: data.crashed, touchdowns: data.touchdowns, statuses });
+    setCheckin({ confidence: data.confidence, crashed: data.crashed, touchdowns: data.touchdowns });
   };
 
   const load = () => {
@@ -98,14 +87,11 @@ export default function RideSummaryScreen() {
 
   const save = async () => {
     setSaving(true);
-    const ids = (status) => Object.keys(checkin.statuses).filter((id) => checkin.statuses[id] === status).map(Number);
     try {
       const saved = await sendJson(`/api/rides/${ride.id}/checkin/`, 'POST', {
         confidence: checkin.confidence,
         crashed: checkin.crashed,
         touchdowns: checkin.touchdowns,
-        cleaned: ids('cleaned'),
-        almost: ids('almost'),
       }, logout);
       apply(saved);
       if (!announceAchievements(saved.new_achievements)) Alert.alert('Saved', 'Your check-in is in. Nice riding.');
@@ -196,7 +182,7 @@ export default function RideSummaryScreen() {
       {gain && (
         <TouchableOpacity style={ui.cardRaised} onPress={() => navigation.navigate('LevelGuide')}>
           <View style={ui.between}>
-            <Text style={ui.label}>XP earned</Text>
+            <Text style={ui.label}>Points earned</Text>
             <Text style={[ui.number, { fontSize: 28, color: gain.xp > 0 ? colors.good : colors.muted }]}>
               {xp(gain.xp)}
             </Text>
@@ -213,10 +199,10 @@ export default function RideSummaryScreen() {
           <ProgressBar fraction={gain.level.fraction} />
           <Text style={ui.small}>
             Level {gain.level.level} · {gain.level.title}
-            {gain.level.to_next != null ? ` · ${gain.level.to_next.toLocaleString()} XP to level ${gain.level.level + 1}` : ''}
+            {gain.level.to_next != null ? ` · ${gain.level.to_next.toLocaleString()} points to level ${gain.level.level + 1}` : ''}
           </Text>
           <Text style={ui.small}>
-            Mark features you cleaned below for more. Skills you practise earn the most: see the Skills tab.
+            Log the graded features you rode below for more.
           </Text>
           <Text style={[ui.small, { color: colors.accent }]}>How rider level works ›</Text>
         </TouchableOpacity>
@@ -294,29 +280,6 @@ export default function RideSummaryScreen() {
           })}
         </View>
 
-        {Object.entries(byTrail).map(([trailId, features]) => (
-          <View key={trailId} style={{ gap: 8 }}>
-            <Text style={[ui.small, { marginTop: 6 }]}>Features on {trailNames[trailId]} · tap to mark</Text>
-            {features.map((f) => {
-              const status = checkin.statuses[f.id] || 'locked';
-              const s = STATUS_STYLE[status];
-              return (
-                <TouchableOpacity
-                  key={f.id}
-                  style={[ui.row, styles.feature]}
-                  onPress={() => setCheckin((c) => ({ ...c, statuses: { ...c.statuses, [f.id]: NEXT_STATUS[status] } }))}
-                >
-                  <View style={[styles.mark, { backgroundColor: s.dot }]}><Text style={styles.markText}>{s.mark}</Text></View>
-                  <Text style={[ui.body, { flex: 1 }]}>{f.name}{f.approved ? '' : ' (awaiting approval)'}</Text>
-                  <Text style={[ui.small, { color: s.dot === colors.dotMuted ? colors.muted : s.dot }]}>{s.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        ))}
-        {ride.efforts.length > 0 && ride.features.length === 0 && (
-          <Text style={ui.small}>No features pinned on these trails yet. Pin drops and rock gardens from the trail page.</Text>
-        )}
 
         <View style={ui.between}>
           <View style={{ flex: 1 }}>
@@ -342,9 +305,16 @@ export default function RideSummaryScreen() {
         <Button title={ride.checked_in_at ? 'Update check-in' : 'Save check-in'} onPress={save} loading={saving} />
       </View>
 
-      {ride.efforts[0] && (
-        <Button title="Pin a feature on this trail →" variant="secondary"
-          onPress={() => navigation.navigate('Trail', { id: ride.efforts[0].trail })} />
+      {Object.keys(byTrail).length > 0 && (
+        <View style={ui.card}>
+          <Text style={ui.label}>Features you rode</Text>
+          <Text style={ui.small}>Log how each one went: cleaned it, rode it sketchy, or walked it.</Text>
+          {Object.entries(byTrail).map(([trailId, features]) => (
+            <Button key={trailId} variant="secondary" icon="list"
+              title={`Log ${features.length} feature${features.length === 1 ? '' : 's'} on ${trailNames[trailId]}`}
+              onPress={() => navigation.navigate('LogTrail', { id: Number(trailId), rideId: ride.id, date: localDay(new Date(ride.started_at)) })} />
+          ))}
+        </View>
       )}
       <Button title="Delete ride" variant="danger" onPress={remove} />
     </ScrollView>
@@ -354,9 +324,6 @@ export default function RideSummaryScreen() {
 const styles = StyleSheet.create({
   rating: { flex: 1, height: 44, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   ratingSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
-  feature: { minHeight: 44, paddingHorizontal: 12, borderRadius: 12, backgroundColor: colors.cardRaised },
-  mark: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  markText: { color: colors.bg, fontFamily: fonts.semibold, fontSize: 14 },
   stepper: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   stepperText: { fontFamily: fonts.semibold, fontSize: 20, color: colors.text },
 });

@@ -1,4 +1,4 @@
-// "How rider level works": the XP rules (from the server, so they always match rules.json), where your XP came from,
+// "How rider level works": the points rules (from the server, so they always match rules.json), where your points came from,
 // the levels and titles, and concrete ways to earn more next.
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -44,8 +44,9 @@ export default function LevelGuideScreen() {
       <Header caption="Rider level" />
       <Text style={ui.title}>How it works</Text>
       <Text style={ui.subtitle}>
-        Your rider level comes from XP. Most XP is for practising skills and mastering them, so you feel progress during
-        the weeks a hard skill takes. Riding earns some too, with daily caps: getting better counts more than riding more.
+        Your rider level comes from points. Most points are for cleaning graded features, the first time especially,
+        and harder features are worth more. Riding earns a little too, with daily caps: getting better counts more than
+        riding more.
       </Text>
 
       <View style={ui.cardRaised}>
@@ -54,13 +55,13 @@ export default function LevelGuideScreen() {
 
       {suggestions.length > 0 && (
         <View style={ui.card}>
-          <Text style={ui.label}>On the trail</Text>
+          <Text style={ui.label}>Riding goals</Text>
           {suggestions.map((s) => <SuggestionRow key={`${s.kind}-${s.title}`} suggestion={s} />)}
         </View>
       )}
 
       <View style={ui.card}>
-        <Text style={ui.label}>Where XP comes from</Text>
+        <Text style={ui.label}>Where points come from</Text>
         {rules.sources.map((s) => (
           <View key={s.key} style={{ gap: 2 }}>
             <View style={ui.between}>
@@ -73,7 +74,7 @@ export default function LevelGuideScreen() {
       </View>
 
       <View style={ui.card}>
-        <Text style={ui.label}>Trail difficulty multiplies feature and climb XP</Text>
+        <Text style={ui.label}>Trail difficulty multiplies clean-climb points</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {rules.difficulty_weights.map((d) => (
             <View key={d.difficulty} style={styles.weight}>
@@ -101,22 +102,18 @@ export default function LevelGuideScreen() {
               <Text style={[ui.body, { flex: 1, color: newTitle ? colors.text : colors.muted }]}>
                 {newTitle ? l.title : ''}
               </Text>
-              <Text style={[ui.small, reached && { color: colors.text }]}>{l.xp.toLocaleString()} XP</Text>
+              <Text style={[ui.small, reached && { color: colors.text }]}>{l.xp.toLocaleString()} pts</Text>
             </View>
           );
         })}
-        {rules.master_title && (
-          <Text style={ui.small}>
-            Master every skill in the tree, ending with the final skill, to earn the {rules.master_title} title at any level.
-          </Text>
-        )}
       </View>
 
       <View style={ui.card}>
         <Text style={ui.label}>Good to know</Text>
-        <Text style={ui.small}>• XP never goes down, except when you delete a ride: what it earned is taken back.</Text>
-        <Text style={ui.small}>• Logged sessions over the daily cap still count toward mastery; they just don't earn XP.</Text>
-        <Text style={ui.small}>• Achievements are separate milestones. They don't add XP, but they mark firsts.</Text>
+        <Text style={ui.small}>• Points never go down, except when you delete a ride or a log: what it earned is taken back.</Text>
+        <Text style={ui.small}>• Points use the grade a feature had when you rode it, so regrading never changes them.</Text>
+        <Text style={ui.small}>• Walking a feature earns nothing, and that's fine: it's logged so you can see your progress.</Text>
+        <Text style={ui.small}>• Achievements are separate milestones. They don't add points, but they mark firsts.</Text>
         <Text style={ui.small}>• Flow and climbing stamina are trends for you to follow; they don't feed the level.</Text>
       </View>
     </ScrollView>

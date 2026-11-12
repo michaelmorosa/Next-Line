@@ -2,7 +2,7 @@ import { Text, View } from 'react-native';
 import { shortDate, xp } from '../utils/format';
 import { colors, fonts, ui } from '../theme';
 
-// One XP ledger entry: "Drill session · Manual   +10 XP".
+// One points ledger entry: "First clean · Root step   +60 pts".
 export default function XPRow({ entry: e }) {
   const what = e.skill_name || e.challenge_title;
   return (

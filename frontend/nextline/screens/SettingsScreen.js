@@ -38,9 +38,17 @@ export default function SettingsScreen() {
     }
   };
 
+  const setAdvanced = async (on) => {
+    try {
+      setUser(await sendJson('/api/user/me/', 'PATCH', { advanced_features: on }, logout));
+    } catch (err) {
+      Alert.alert("Couldn't save", err.message);
+    }
+  };
+
   const deleteAccount = () => Alert.alert(
     'Delete your account?',
-    'Every ride, trail and feature you have will be deleted. This cannot be undone.',
+    'Every ride, trail and feature log you have will be deleted. This cannot be undone.',
     [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -78,6 +86,20 @@ export default function SettingsScreen() {
               trackColor={{ true: colors.good, false: colors.border }} thumbColor={colors.text} />
           </View>
           <Button title="Save" onPress={save} loading={saving} />
+        </View>
+
+        <View style={ui.card}>
+          <Text style={ui.label}>Advanced features</Text>
+          <Text style={ui.small}>
+            Grades 8 and up are big, committing features. They only appear in Next up when this is on. You can still see
+            them on trail pages either way.
+          </Text>
+          <View style={ui.between}>
+            <Text style={ui.body}>Suggest advanced features</Text>
+            <Switch value={Boolean(user?.advanced_features)} onValueChange={setAdvanced}
+              trackColor={{ true: colors.accent, false: colors.border }} thumbColor={colors.text} />
+          </View>
+          <Button title="Safety notice" variant="outline" onPress={() => navigation.navigate('Safety')} />
         </View>
 
         <View style={ui.card}>
