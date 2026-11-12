@@ -5,8 +5,9 @@ from django.db.models import Min
 from progression import content, xp
 from progression.models import Reason
 from trails.models import (
-    DIFFICULTY_WEIGHT, RIDER_RATED_MAX, Difficulty, Direction, FeatureProgress, FeatureStatus, Trail, trusted_weight,
+    DIFFICULTY_WEIGHT, RIDER_RATED_MAX, Difficulty, Direction, Trail, trusted_weight,
 )
+from trails import progress as feature_progress
 from trails.views import features_with_counts
 
 from . import scoring
@@ -27,21 +28,21 @@ def suggestions(user):
     dashboard's next-up list."""
     values = content.rules()['xp']
     out = []
-    status = dict(FeatureProgress.objects.filter(user=user).values_list('feature_id', 'status'))
+    status = {fid: st.status for fid, st in feature_progress.states(user).items()}
     ridden = set(TrailEffort.objects.filter(user=user).values_list('trail_id', flat=True))
     features = [
-        f for f in features_with_counts(user).filter(approved=True).select_related('trail')
-        if status.get(f.id) != FeatureStatus.CLEANED
+        f for f in features_with_counts(user).live().select_related('trail')
+        if status.get(f.id) != 'cleaned'
     ]
 
     def rank(f):
         # Ones you've almost got first, then trails you ride, then what others manage, then the most XP.
-        return (status.get(f.id) != FeatureStatus.ALMOST, f.trail_id not in ridden, -f.riders_cleaned,
+        return (status.get(f.id) != 'sketchy', f.trail_id not in ridden, -f.riders_cleaned,
                 -feature_xp(f.trail))
 
     for f in sorted(features, key=rank)[:SUGGESTED_FEATURES]:
         notes = [f'on {f.trail.name}']
-        if status.get(f.id) == FeatureStatus.ALMOST:
+        if status.get(f.id) == 'sketchy':
             notes.append("you've almost got it")
         if f.riders_cleaned:
             notes.append(f"{f.riders_cleaned} rider{'s' if f.riders_cleaned != 1 else ''} cleaned it")

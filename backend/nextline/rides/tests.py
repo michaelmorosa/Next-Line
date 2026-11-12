@@ -11,7 +11,7 @@ from rest_framework.test import APIClient
 
 from progression.models import Reason, XPEntry
 from progression.xp import thresholds, total_xp
-from trails.models import Feature, FeatureProgress, FeatureStatus, Trail
+from trails.models import Feature, FeatureLog, Trail
 
 from . import analysis
 from .models import CrashAlert, Ride, TrailEffort
@@ -311,9 +311,12 @@ class CheckinTests(TestCase):
         self.client.force_authenticate(self.user)
         self.ride_id = upload(self.client).data['id']
         self.trail = descent_trail()
+        Trail.objects.filter(pk=self.trail.pk).update(owner=None)  # features are on shared trails
         lat, lng = self.trail.path[len(self.trail.path) // 2]
-        self.drop = Feature.objects.create(trail=self.trail, name='3 ft drop', kind='drop', lat=lat, lng=lng)
-        self.roots = Feature.objects.create(trail=self.trail, name='Roots', kind='roots', lat=lat, lng=lng)
+        self.drop = Feature.objects.create(trail=self.trail, name='3 ft drop', type='drop', lat=lat, lng=lng,
+                                           status='certified', grade=3, position=1)
+        self.roots = Feature.objects.create(trail=self.trail, name='Roots', type='roots', lat=lat, lng=lng,
+                                            status='certified', grade=2, position=2)
 
     def checkin(self, **body):
         return self.client.post(f'/api/rides/{self.ride_id}/checkin/', body, format='json')
@@ -326,17 +329,16 @@ class CheckinTests(TestCase):
         res = self.checkin(confidence=4, cleaned=[self.drop.id], almost=[self.roots.id])
         self.assertEqual(res.status_code, 200, res.data)
         self.assertEqual(res.data['confidence'], 4)
-        drop = FeatureProgress.objects.get(feature=self.drop)
-        self.assertEqual((drop.status, drop.clean_count), (FeatureStatus.CLEANED, 1))
-        self.assertEqual(FeatureProgress.objects.get(feature=self.roots).status, FeatureStatus.ALMOST)
+        drop = FeatureLog.objects.get(feature=self.drop)
+        self.assertEqual((drop.outcome, drop.ride_id, drop.grade_at_log), ('cleaned', self.ride_id, 3))
+        self.assertEqual(FeatureLog.objects.get(feature=self.roots).outcome, 'sketchy')
 
     def test_editing_checkin_does_not_double_count(self):
         self.checkin(cleaned=[self.drop.id])
         self.checkin(cleaned=[self.drop.id])
-        self.assertEqual(FeatureProgress.objects.get(feature=self.drop).clean_count, 1)
+        self.assertEqual(FeatureLog.objects.filter(feature=self.drop, outcome='cleaned').count(), 1)
         self.checkin(cleaned=[])
-        drop = FeatureProgress.objects.get(feature=self.drop)
-        self.assertEqual((drop.status, drop.clean_count), (FeatureStatus.ALMOST, 0))
+        self.assertFalse(FeatureLog.objects.filter(feature=self.drop).exists())
 
     def test_rider_corrects_touchdowns(self):
         res = self.checkin(touchdowns=3)
@@ -345,12 +347,14 @@ class CheckinTests(TestCase):
         self.assertEqual(res.data['touchdowns'], 0)  # back to the estimate
         self.assertEqual(self.checkin(touchdowns=-1).status_code, 400)
 
-    def test_cannot_check_in_other_riders_private_features(self):
+    def test_cannot_check_in_drafts_or_private_features(self):
         other = User.objects.create_user(username='other', email='o@example.com', password='x')
         hidden = Trail.objects.create(name='Secret', owner=other, start_lat=0, start_lng=0, end_lat=0, end_lng=0,
                                       length_m=1)
-        feature = Feature.objects.create(trail=hidden, name='x', lat=0, lng=0)
+        feature = Feature.objects.create(trail=hidden, name='x', lat=0, lng=0, status='certified', grade=1)
         self.assertEqual(self.checkin(cleaned=[feature.id]).status_code, 400)
+        draft = Feature.objects.create(trail=self.trail, name='Draft', lat=0, lng=0)
+        self.assertEqual(self.checkin(cleaned=[draft.id]).status_code, 400)
 
 
 class CrashAlertTests(TestCase):
@@ -477,31 +481,28 @@ class ProgressTests(TestCase):
         res = upload(self.client)
         self.assertEqual({i['label']: i['amount'] for i in res.data['xp']['items']}['Clean climb'], 30)
 
-    def clean_features(self, difficulty, count, owner=None):
-        trail = Trail.objects.create(name=f'{difficulty} trail', difficulty=difficulty, owner=owner, start_lat=0,
+    def clean_features(self, difficulty, count, status='certified'):
+        trail = Trail.objects.create(name=f'{difficulty} trail', difficulty=difficulty, start_lat=0,
                                      start_lng=0, end_lat=0, end_lng=0, length_m=1)
         for i in range(count):
-            feature = Feature.objects.create(trail=trail, name=f'f{i}', lat=0, lng=0)
-            FeatureProgress.objects.create(user=self.user, feature=feature, status='cleaned', clean_count=1,
-                                           first_cleaned_at=timezone.now())
+            feature = Feature.objects.create(trail=trail, name=f'f{i}', lat=0, lng=0, status=status, grade=2)
+            FeatureLog.objects.create(user=self.user, feature=feature, outcome='cleaned',
+                                      ridden_on=timezone.localdate(), grade_at_log=2)
 
-    def test_rider_rated_black_counts_as_blue(self):
-        from progression.ride_xp import award_features
-        self.clean_features('black', 3, owner=self.user)
-        self.assertEqual(sum(e.amount for e in award_features(self.user)), 3 * 20 * 2)
-        self.assertEqual(award_features(self.user), [])  # paid once
-        self.clean_features('black', 1)  # shared black: full weight
-        self.assertEqual([e.amount for e in award_features(self.user)], [80])
+    def test_cleaned_feature_counts_need_live_features(self):
+        self.clean_features('black', 3, status='draft')
         from .achievements import cleaned_feature_counts
+        self.assertEqual(cleaned_feature_counts(self.user)['any'], 0)
+        self.clean_features('black', 1)
+        self.clean_features('blue', 2)
         counts = cleaned_feature_counts(self.user)
-        self.assertEqual((counts['blue'], counts['black']), (4, 1))
+        self.assertEqual((counts['any'], counts['blue'], counts['black']), (3, 3, 1))
 
     def test_mastered_trails_by_difficulty(self):
         from .achievements import mastered_trail_counts
         self.clean_features('blue', 3)
-        self.clean_features('black', 3, owner=self.user)  # rider-rated: counts as blue
         self.clean_features('black', 2)  # not mastered: needs 3 features
-        self.assertEqual(mastered_trail_counts(self.user), {'any': 2, 'blue': 2, 'black': 0, 'double_black': 0})
+        self.assertEqual(mastered_trail_counts(self.user), {'any': 1, 'blue': 1, 'black': 0, 'double_black': 0})
 
     def test_achievements_are_earned_once(self):
         res = upload(self.client, jumps=[{'t': 700, 'airtime_s': 0.6}])
@@ -514,9 +515,9 @@ class ProgressTests(TestCase):
         self.assertIsNotNone(listing['first_ride']['earned_at'])
         self.assertIsNone(listing['air_one']['earned_at'])
 
-    def test_black_diamond_achievement_needs_a_shared_trail(self):
+    def test_black_diamond_achievement_needs_a_live_feature(self):
         from .achievements import award
-        self.clean_features('black', 1, owner=self.user)
+        self.clean_features('black', 1, status='draft')
         self.assertNotIn('black_feature', award(self.user))
         self.clean_features('black', 1)
         self.assertIn('black_feature', award(self.user))
@@ -524,19 +525,23 @@ class ProgressTests(TestCase):
     def test_cleaning_a_feature_shows_in_the_ride_xp(self):
         ride = upload(self.client).data
         trail = descent_trail()
+        Trail.objects.filter(pk=trail.pk).update(owner=None)
         lat, lng = trail.path[5]
-        feature = Feature.objects.create(trail=trail, name='Root staircase', lat=lat, lng=lng)
+        feature = Feature.objects.create(trail=trail, name='Root staircase', lat=lat, lng=lng, status='certified',
+                                         grade=2)
         res = self.client.post(f"/api/rides/{ride['id']}/checkin/", {'cleaned': [feature.id]}, format='json')
         self.assertEqual({i['label']: i['amount'] for i in res.data['xp']['items']}['Feature cleaned'], 20)
 
     def test_suggestions_with_xp(self):
         upload(self.client)
-        mine = descent_trail()
-        Feature.objects.create(trail=mine, name='Easy drop', lat=mine.path[3][0], lng=mine.path[3][1])
+        ridden = descent_trail()
+        Trail.objects.filter(pk=ridden.pk).update(owner=None)
+        Feature.objects.create(trail=ridden, name='Easy drop', lat=ridden.path[3][0], lng=ridden.path[3][1],
+                               status='certified', grade=1)
         shared = Trail.objects.create(name='Rattlesnake DH', difficulty='black', start_lat=0, start_lng=0, end_lat=0,
                                       end_lng=0, length_m=1)
-        rock = Feature.objects.create(trail=shared, name='Rock garden', lat=0, lng=0)
-        FeatureProgress.objects.create(user=self.user, feature=rock, status='almost')
+        rock = Feature.objects.create(trail=shared, name='Rock garden', lat=0, lng=0, status='certified', grade=4)
+        FeatureLog.objects.create(user=self.user, feature=rock, outcome='sketchy', ridden_on=timezone.localdate())
         suggestions = self.client.get('/api/progress/').data['suggestions']
         self.assertEqual(suggestions[0]['title'], 'Clean Rock garden')  # almost got it
         self.assertEqual(suggestions[0]['xp'], 80)

@@ -2,13 +2,13 @@
 
 Each rider gets a private auto trail for every descent and climb they ride. When a trail is promoted to shared,
 everyone who already rode it has their own copy, and their future rides would be timed on both. promote() merges
-those copies into the shared trail: laps, PRs and features carry over, and the copies are deleted.
+those copies into the shared trail: laps, PRs, features and riders' logs carry over, and the copies are deleted.
 """
 from django.db import transaction
 
 from rides.analysis import haversine
 
-from .models import Feature, FeatureProgress, FeatureStatus, Trail
+from .models import FeatureLog, Trail
 
 # A private trail is a copy of the shared one when both ends are this close and the lengths roughly agree. Auto
 # trails start and end where each rider's GPS said the elevation started changing, so this is looser than matching.
@@ -20,9 +20,6 @@ COPY_SEARCH_DEGREES = 0.001
 SAME_FEATURE_RADIUS_M = 15
 # Two laps on the same trail in the same ride starting this close together are the same lap counted twice.
 SAME_LAP_S = 30
-
-STATUS_RANK = {FeatureStatus.LOCKED: 0, FeatureStatus.ALMOST: 1, FeatureStatus.CLEANED: 2}
-
 
 def find_copies(trail):
     """Riders' private trails that are the same descent or climb as `trail`."""
@@ -41,28 +38,15 @@ def find_copies(trail):
 
 
 def merge_progress(source, target):
-    """Fold one feature's rider progress into another's, keeping each rider's best."""
-    for progress in FeatureProgress.objects.filter(feature=source):
-        existing = FeatureProgress.objects.filter(user=progress.user, feature=target).first()
-        if not existing:
-            progress.feature = target
-            progress.save(update_fields=['feature'])
-            continue
-        if STATUS_RANK[progress.status] > STATUS_RANK[existing.status]:
-            existing.status = progress.status
-        existing.clean_count = max(existing.clean_count, progress.clean_count)
-        firsts = [t for t in (existing.first_cleaned_at, progress.first_cleaned_at) if t]
-        existing.first_cleaned_at = min(firsts) if firsts else None
-        existing.note = existing.note or progress.note
-        existing.save()
-        progress.delete()
+    """Move riders' logs on one feature to another."""
+    FeatureLog.objects.filter(feature=source).update(feature=target)
 
 
 def remap_cleaned(source, target):
     """Point rides' check-ins at the surviving feature, so editing an old check-in still adjusts the right count."""
     from rides.models import Ride
 
-    users = set(FeatureProgress.objects.filter(feature__in=[source, target]).values_list('user_id', flat=True))
+    users = set(FeatureLog.objects.filter(feature__in=[source, target]).values_list('user_id', flat=True))
     users.add(source.created_by_id)
     for ride in Ride.objects.filter(user_id__in=users).exclude(cleaned_features=[]):
         if source.id in ride.cleaned_features:
@@ -122,7 +106,7 @@ def recompute_prs(trail):
 
 @transaction.atomic
 def merge_feature(feature, target):
-    """Fold a duplicate pin into an existing feature: riders' progress and check-ins move over, the pin goes."""
+    """Fold a duplicate feature into another: riders' logs and check-ins move over, the duplicate goes."""
     remap_cleaned(feature, target)
     merge_progress(feature, target)
     feature.delete()
@@ -146,9 +130,7 @@ def promote(trail):
     trail.owner = None
     trail.is_auto = False
     trail.save(update_fields=['owner', 'is_auto'])
-    # Riders' pins are now on a trail everyone sees: they wait for approval like any other pin on a shared trail.
-    pending = trail.features.filter(approved=True).exclude(created_by__is_staff=True).update(approved=False)
     double = remove_double_laps(trail)
     recompute_prs(trail)
     return {'copies': len(copies), 'riders': riders, 'laps': laps - double, 'features_moved': moved,
-            'features_merged': merged, 'features_pending': pending}
+            'features_merged': merged}

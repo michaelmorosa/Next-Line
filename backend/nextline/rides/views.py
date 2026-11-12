@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
 from progression import ride_xp
-from trails.models import FeatureProgress, FeatureStatus
+from trails.models import Feature, FeatureLog, Outcome
 
 from . import achievements, level_guide, scoring
 from .alerts import send_crash_alert
@@ -74,10 +74,8 @@ class RideViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Destr
             if 'cleaned' in data:
                 apply_cleaned(request.user, ride, set(data['cleaned']))
             for feature_id in set(data.get('almost', [])) - set(data.get('cleaned', [])):
-                progress, _ = FeatureProgress.objects.get_or_create(user=request.user, feature_id=feature_id)
-                if progress.status == FeatureStatus.LOCKED:
-                    progress.status = FeatureStatus.ALMOST
-                    progress.save()
+                if not FeatureLog.objects.filter(user=request.user, feature_id=feature_id, ride=ride).exists():
+                    log_feature(request.user, feature_id, ride, Outcome.SKETCHY)
             ride.checked_in_at = timezone.now()
             ride.save()
         ride_xp.award_features(request.user)
@@ -86,22 +84,25 @@ class RideViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Destr
         return Response(body)
 
 
+def log_feature(user, feature_id, ride, outcome):
+    feature = Feature.objects.get(pk=feature_id)
+    return FeatureLog.objects.create(
+        user=user, feature=feature, ride=ride, outcome=outcome, ridden_on=timezone.localdate(ride.started_at),
+        logged_at=ride.started_at, grade_at_log=feature.grade,
+    )
+
+
 def apply_cleaned(user, ride, cleaned):
-    """Set the ride's cleaned features, adjusting clean counts by what changed since the last check-in."""
+    """Set the ride's cleaned features: one 'cleaned' log per feature for this ride, so editing the check-in
+    adds or removes logs instead of adding them again."""
     before = set(ride.cleaned_features)
     for feature_id in cleaned - before:
-        progress, _ = FeatureProgress.objects.get_or_create(user=user, feature_id=feature_id)
-        progress.status = FeatureStatus.CLEANED
-        progress.clean_count += 1
-        if not progress.first_cleaned_at or ride.started_at < progress.first_cleaned_at:
-            progress.first_cleaned_at = ride.started_at
-        progress.save()
-    for progress in FeatureProgress.objects.filter(user=user, feature_id__in=before - cleaned):
-        progress.clean_count = max(0, progress.clean_count - 1)
-        if progress.clean_count == 0 and progress.status == FeatureStatus.CLEANED:
-            progress.status = FeatureStatus.ALMOST
-            progress.first_cleaned_at = None
-        progress.save()
+        FeatureLog.objects.filter(user=user, feature_id=feature_id, ride=ride).exclude(
+            outcome=Outcome.CLEANED).delete()
+        log_feature(user, feature_id, ride, Outcome.CLEANED)
+    FeatureLog.objects.filter(
+        user=user, ride=ride, feature_id__in=before - cleaned, outcome=Outcome.CLEANED,
+    ).delete()
     ride.cleaned_features = sorted(cleaned)
 
 

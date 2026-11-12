@@ -14,8 +14,13 @@ REQUIRED_SKILL_FIELDS = (
     'id', 'name', 'branch', 'tier', 'prerequisites', 'description', 'why', 'drills', 'mastery_test', 'media', 'tags',
 )
 MIN_DRILLS, MAX_DRILLS = 2, 3
-# Tags that match a trail feature's kind (trails.models.FeatureKind) link a skill to features. Others only label it.
-FEATURE_TAGS = {'drop', 'jump', 'gap', 'rock_garden', 'roots', 'berm', 'technical'}
+# A skill's tags link it to trail feature types (trails.models.FeatureType). The tags predate the current types,
+# so some map across: a gap is a jump, a berm is a corner.
+TAG_TYPES = {
+    'drop': 'drop', 'jump': 'jump', 'gap': 'jump', 'rock_garden': 'rock_garden', 'roots': 'roots',
+    'berm': 'corner', 'technical': 'other',
+}
+FEATURE_TAGS = set(TAG_TYPES)
 XP_KEYS = (
     'drill_session', 'attempt_video', 'mastery_per_tier', 'challenge_complete', 'weekly_streak', 'ride',
     'feature_cleaned_per_weight', 'trail_pr', 'clean_climb_per_weight', 'biggest_air', 'descent_per_100m', 'jump',

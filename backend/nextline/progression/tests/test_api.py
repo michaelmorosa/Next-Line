@@ -7,7 +7,7 @@ from rest_framework.test import APIClient
 
 from progression import services
 from progression.models import XPEntry
-from trails.models import Feature, FeatureKind, Trail
+from trails.models import Feature, FeatureType, Trail
 
 from .helpers import FOUNDATIONS, TempMediaMixin, make_user, video
 
@@ -66,9 +66,11 @@ class SkillTreeApiTests(ApiTestCase):
     def test_nearby_tagged_features(self):
         trail = Trail.objects.create(name='Lower Ridge', start_lat=34, start_lng=-118, end_lat=34.01,
                                      end_lng=-118, length_m=1100)
-        Feature.objects.create(trail=trail, name='Ledge', kind=FeatureKind.DROP, lat=34.002, lng=-118)
-        Feature.objects.create(trail=trail, name='Far ledge', kind=FeatureKind.DROP, lat=36, lng=-118)
-        Feature.objects.create(trail=trail, name='Berm', kind=FeatureKind.BERM, lat=34.003, lng=-118)
+        live = {'status': 'certified', 'grade': 3}
+        Feature.objects.create(trail=trail, name='Ledge', type=FeatureType.DROP, lat=34.002, lng=-118, **live)
+        Feature.objects.create(trail=trail, name='Far ledge', type=FeatureType.DROP, lat=36, lng=-118, **live)
+        Feature.objects.create(trail=trail, name='Berm', type=FeatureType.CORNER, lat=34.003, lng=-118, **live)
+        Feature.objects.create(trail=trail, name='Draft ledge', type=FeatureType.DROP, lat=34.001, lng=-118)
         res = self.client.get('/api/skills/roll_offs/?lat=34&lng=-118')
         self.assertEqual([f['name'] for f in res.data['nearby_features']], ['Ledge'])
         self.assertEqual(res.data['nearby_features'][0]['trail_name'], 'Lower Ridge')

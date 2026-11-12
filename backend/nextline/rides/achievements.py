@@ -3,9 +3,9 @@
 award() is called after anything that can earn one: uploading a ride, a check-in, marking a feature, and opening
 Progress (which also backfills riders who earned something before it existed).
 """
-from django.db.models import Count, Max, Sum
+from django.db.models import Count, Max, Min, Sum
 
-from trails.models import DIFFICULTY_WEIGHT, Difficulty, Direction, Feature, FeatureProgress, FeatureStatus, trusted_difficulty
+from trails.models import DIFFICULTY_WEIGHT, Difficulty, Direction, Feature, FeatureLog, Outcome, trusted_difficulty
 
 from .models import Achievement, Ride, TrailEffort
 
@@ -19,14 +19,21 @@ def at_least(difficulty):
     return {d for d, w in DIFFICULTY_WEIGHT.items() if w >= weight and d != Difficulty.UNRATED}
 
 
+def first_cleans(user, until=None):
+    """One row per live feature the rider has cleaned (by `until`), with its trail's difficulty and owner."""
+    rows = (
+        FeatureLog.objects.filter(user=user, outcome=Outcome.CLEANED, feature__in=Feature.objects.live())
+        .values('feature_id', 'feature__trail_id', 'feature__trail__difficulty', 'feature__trail__owner_id')
+        .annotate(first=Min('logged_at'))
+    )
+    return [r for r in rows if until is None or r['first'] <= until]
+
+
 def cleaned_feature_counts(user, until=None):
     """{'any': n, 'blue': n, 'black': n, 'double_black': n}: features cleaned at each trusted difficulty or harder."""
-    cleaned = FeatureProgress.objects.filter(user=user, status=FeatureStatus.CLEANED, feature__approved=True)
-    if until:
-        cleaned = cleaned.filter(first_cleaned_at__lte=until)
     difficulties = [
-        trusted_difficulty(d, owner)
-        for d, owner in cleaned.values_list('feature__trail__difficulty', 'feature__trail__owner_id')
+        trusted_difficulty(row['feature__trail__difficulty'], row['feature__trail__owner_id'])
+        for row in first_cleans(user, until)
     ]
     counts = {'any': len(difficulties)}
     for level in (Difficulty.BLUE, Difficulty.BLACK, Difficulty.DOUBLE_BLACK):
@@ -36,16 +43,15 @@ def cleaned_feature_counts(user, until=None):
 
 
 def mastered_trail_difficulties(user, until=None):
-    """Trusted difficulty of each trail this rider has mastered: every approved feature cleaned, with at least
+    """Trusted difficulty of each trail this rider has mastered: every live feature cleaned, with at least
     MASTERY_MIN_FEATURES of them."""
     trails = (
-        Feature.objects.filter(approved=True).values('trail_id', 'trail__difficulty', 'trail__owner_id')
+        Feature.objects.live().values('trail_id', 'trail__difficulty', 'trail__owner_id')
         .annotate(total=Count('id')).filter(total__gte=MASTERY_MIN_FEATURES)
     )
-    cleaned = FeatureProgress.objects.filter(user=user, status=FeatureStatus.CLEANED, feature__approved=True)
-    if until:
-        cleaned = cleaned.filter(first_cleaned_at__lte=until)
-    counts = dict(cleaned.values('feature__trail_id').annotate(n=Count('id')).values_list('feature__trail_id', 'n'))
+    counts = {}
+    for row in first_cleans(user, until):
+        counts[row['feature__trail_id']] = counts.get(row['feature__trail_id'], 0) + 1
     return [
         trusted_difficulty(t['trail__difficulty'], t['trail__owner_id'])
         for t in trails if counts.get(t['trail_id'], 0) >= t['total']

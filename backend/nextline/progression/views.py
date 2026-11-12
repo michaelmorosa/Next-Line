@@ -94,12 +94,12 @@ def rider_location(request):
 
 
 def nearby_features(request, skill):
-    """Trail features whose kind matches the skill's tags, closest first. Empty without a location."""
-    kinds = [t for t in skill['tags'] if t in content.FEATURE_TAGS]
+    """Trail features whose type matches the skill's tags, closest first. Empty without a location."""
+    kinds = {content.TAG_TYPES[t] for t in skill['tags'] if t in content.TAG_TYPES}
     where = rider_location(request)
     if not kinds or not where:
         return []
-    features = list(features_with_counts(request.user).filter(kind__in=kinds).select_related('trail'))
+    features = list(features_with_counts(request.user).live().filter(type__in=kinds).select_related('trail'))
     near = sorted(
         ((haversine(where[0], where[1], f.lat, f.lng), f) for f in features), key=lambda pair: pair[0],
     )

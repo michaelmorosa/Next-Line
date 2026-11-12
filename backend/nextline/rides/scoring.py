@@ -9,7 +9,8 @@ from django.db.models import Avg, Count, Max, Min, Sum
 from django.utils import timezone
 
 from progression import ride_xp, summary
-from trails.models import Direction, FeatureProgress, FeatureStatus
+from trails import progress as feature_progress
+from trails.models import Direction
 
 from . import achievements
 from .models import Ride, TrailEffort
@@ -130,7 +131,7 @@ def climbing_trend(user, today=None):
 
 def progress(user):
     achievements.award(user)  # also backfills riders who earned something before it existed
-    ride_xp.award_features(user)  # pays out pins approved since the rider cleaned them
+    ride_xp.award_features(user)  # pays out features certified since the rider cleaned them
     now = timezone.now()
     today = timezone.localdate()
     flow = flow_trend(user, today)
@@ -147,7 +148,7 @@ def progress(user):
         'favorite_climb': favorite_trail(user, Direction.CLIMB),
         'climbing': climbing_trend(user, today),
         'totals': {
-            'features_cleaned': FeatureProgress.objects.filter(user=user, status=FeatureStatus.CLEANED).count(),
+            'features_cleaned': len(feature_progress.cleaned_ids(user)),
             'air_this_month_s': round(
                 Ride.objects.filter(user=user, started_at__date__gte=month_start)
                 .aggregate(s=Sum('total_air_s'))['s'] or 0, 1),

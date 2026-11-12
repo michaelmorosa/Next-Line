@@ -140,7 +140,8 @@ class RideDetailSerializer(RideListSerializer):
     def get_features(self, obj):
         """Features on the trails ridden, for the check-in."""
         features = list(
-            features_with_counts(obj.user).filter(trail__efforts__ride=obj).distinct().order_by('trail_id', 'id')
+            features_with_counts(obj.user).live().filter(trail__efforts__ride=obj).distinct()
+            .order_by('trail_id', 'position', 'id')
         )
         context = {**self.context, 'progress': progress_for(obj.user, features)}
         return FeatureSerializer(features, many=True, context=context).data

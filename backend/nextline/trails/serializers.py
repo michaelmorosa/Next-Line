@@ -1,17 +1,17 @@
-from django.utils import timezone
 from rest_framework import serializers
 
 from rides.analysis import haversine
 
-from .models import Feature, FeatureProgress, FeatureStatus, Trail
+from . import progress
+from .models import Feature, Trail
 
 # A pinned feature has to be this close to the trail's line.
 MAX_FEATURE_DISTANCE_M = 100
 
 
 def progress_for(user, features):
-    """{feature_id: FeatureProgress} for this rider."""
-    return {p.feature_id: p for p in FeatureProgress.objects.filter(user=user, feature__in=features)}
+    """{feature_id: FeatureState} for this rider, from their logs."""
+    return progress.states(user, features)
 
 
 class FeatureSerializer(serializers.ModelSerializer):
@@ -19,34 +19,30 @@ class FeatureSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     clean_count = serializers.SerializerMethodField()
     first_cleaned_at = serializers.SerializerMethodField()
-    note = serializers.SerializerMethodField()
     riders_cleaned = serializers.SerializerMethodField()
     is_mine = serializers.SerializerMethodField()
+    certification = serializers.CharField(source='status', read_only=True)
 
     class Meta:
         model = Feature
-        fields = ('id', 'trail', 'name', 'kind', 'lat', 'lng', 'status', 'clean_count', 'first_cleaned_at', 'note',
-                  'riders_cleaned', 'is_mine', 'approved')
-        read_only_fields = ('trail', 'approved')
+        fields = ('id', 'trail', 'name', 'type', 'grade', 'lat', 'lng', 'position', 'status', 'clean_count',
+                  'first_cleaned_at', 'riders_cleaned', 'is_mine', 'certification')
+        read_only_fields = ('trail', 'position')
 
     def _progress(self, obj):
         return self.context.get('progress', {}).get(obj.id)
 
     def get_status(self, obj):
         p = self._progress(obj)
-        return p.status if p else FeatureStatus.LOCKED
+        return p.legacy_status if p else 'locked'
 
     def get_clean_count(self, obj):
         p = self._progress(obj)
-        return p.clean_count if p else 0
+        return p.cleans if p else 0
 
     def get_first_cleaned_at(self, obj):
         p = self._progress(obj)
         return p.first_cleaned_at if p else None
-
-    def get_note(self, obj):
-        p = self._progress(obj)
-        return p.note if p else ''
 
     def get_riders_cleaned(self, obj):
         # Annotated by trails.views.features_with_counts; a feature just pinned has none.
@@ -66,19 +62,9 @@ class FeatureSerializer(serializers.ModelSerializer):
 
 
 class FeatureProgressSerializer(serializers.Serializer):
-    status = serializers.ChoiceField(choices=FeatureStatus.choices)
+    """Legacy: the older app sets a status; it's recorded as a log (cleaned or sketchy)."""
+    status = serializers.ChoiceField(choices=('locked', 'almost', 'cleaned'))
     note = serializers.CharField(max_length=120, required=False, allow_blank=True)
-
-    def save(self, user, feature):
-        progress, _ = FeatureProgress.objects.get_or_create(user=user, feature=feature)
-        progress.status = self.validated_data['status']
-        if 'note' in self.validated_data:
-            progress.note = self.validated_data['note']
-        if progress.status == FeatureStatus.CLEANED:
-            progress.clean_count = max(progress.clean_count, 1)
-            progress.first_cleaned_at = progress.first_cleaned_at or timezone.now()
-        progress.save()
-        return progress
 
 
 class TrailListSerializer(serializers.ModelSerializer):
