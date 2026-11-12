@@ -1,0 +1,77 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a> &rsaquo;
+  <a href="{% url 'admin:trails_trail_changelist' %}">Trails</a> &rsaquo;
+  <a href="{% url 'admin:trails_trail_change' trail.pk %}">{{ trail.name }}</a> &rsaquo; Features
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+  .nl-table td, .nl-table th { vertical-align: middle; }
+  .nl-status { padding: 2px 8px; border-radius: 10px; font-size: 11px; white-space: nowrap; }
+  .nl-draft { background: #eee; color: #444; }
+  .nl-certified { background: #dff3e4; color: #1d6b35; }
+  .nl-changed { background: #fff1d6; color: #8a5a00; }
+  .nl-closed { background: #f6dede; color: #8a1f1f; }
+  .nl-warn { background: #fff8e5; border-left: 4px solid #e0a800; padding: 8px 12px; margin: 4px 0; }
+  .nl-move button { padding: 2px 8px; }
+  .nl-ladder { display: inline-block; vertical-align: top; margin: 0 24px 16px 0; min-width: 220px; }
+  .nl-ladder li { list-style: none; padding: 2px 0; }
+  .nl-ladder ul { padding: 0; margin: 6px 0 0; }
+</style>
+
+<h2>Riding order</h2>
+<p>Top to bottom, as a rider meets them. New captures are placed by GPS; move them here if that's wrong.</p>
+<table class="nl-table">
+  <thead><tr><th></th><th>#</th><th>Feature</th><th>Type</th><th>Grade</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for row in features %}
+    <tr>
+      <td class="nl-move">
+        <form method="post" style="display:inline">{% csrf_token %}
+          <button name="move" value="{{ row.feature.pk }}:up" {% if forloop.first %}disabled{% endif %} title="Move up">&uarr;</button>
+          <button name="move" value="{{ row.feature.pk }}:down" {% if forloop.last %}disabled{% endif %} title="Move down">&darr;</button>
+        </form>
+      </td>
+      <td>{{ row.feature.position }}</td>
+      <td><a href="{{ row.change_url }}">{{ row.feature.name }}</a></td>
+      <td>{{ row.feature.get_type_display }}</td>
+      <td>{{ row.feature.grade|default:"-" }}</td>
+      <td>
+        <span class="nl-status nl-{{ row.feature.status }}">{{ row.feature.get_status_display }}</span>
+        {% if row.stale %}<span class="nl-status nl-changed">Not recently verified</span>{% endif %}
+      </td>
+      <td>{% if row.feature.has_ride_around %}Ride-around{% if row.feature.ride_around_grade %} (grade {{ row.feature.ride_around_grade }}){% endif %}{% endif %}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7">No features yet. Capture them from the app on site, or add them under Features.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h2 style="margin-top:32px">Ladders{% if trail.system %} at {{ trail.system.name }}{% endif %}</h2>
+{% if warnings %}
+  {% for w in warnings %}<div class="nl-warn">{{ w.message }}</div>{% endfor %}
+{% else %}
+  <p>Every ladder steps up one grade at a time.</p>
+{% endif %}
+{% if ladders %}
+  <div style="margin-top:12px">
+  {% for type, rungs in ladders %}
+    <div class="nl-ladder">
+      <strong>{{ type }}</strong>
+      <ul>
+      {% for f in rungs %}
+        <li>{{ f.grade|default:"?" }} &middot; {{ f.name }} <small>({{ f.trail.name }}{% if f.status != 'certified' %}, {{ f.get_status_display|lower }}{% endif %})</small></li>
+      {% endfor %}
+      </ul>
+    </div>
+  {% endfor %}
+  </div>
+{% elif not trail.system %}
+  <p>This trail isn't in a trail system, so it has no ladders. Set its system on the trail page.</p>
+{% endif %}
+{% endblock %}

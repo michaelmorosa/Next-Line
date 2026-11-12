@@ -200,6 +200,11 @@ STATIC_ROOT = BASE_DIR / "static"
 # In production nginx serves the file after Django checks access (USE_X_ACCEL_REDIRECT, see README).
 MEDIA_ROOT = os.getenv("MEDIA_ROOT", str(BASE_DIR / "media"))
 USE_X_ACCEL_REDIRECT = env_bool("USE_X_ACCEL_REDIRECT")
+# Feature photos and POV clips are public, at /media/features/ (nginx serves that folder only; see README).
+MEDIA_URL = "/media/"
+# Trail team POV clips and photos straight from a phone camera.
+FEATURE_PHOTO_MAX_MB = 25
+FEATURE_VIDEO_MAX_MB = 300
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

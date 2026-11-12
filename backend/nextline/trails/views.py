@@ -3,12 +3,14 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from progression import feature_points
 from rides import achievements
 
+from . import certification
 from .models import Feature, FeatureLog, Outcome, Trail, is_trail_team
 from .serializers import (
     FeatureProgressSerializer, FeatureSerializer, TrailDetailSerializer, TrailListSerializer,
@@ -119,3 +121,16 @@ class FeatureViewSet(mixins.DestroyModelMixin, viewsets.GenericViewSet):
         body = FeatureSerializer(feature, context=context).data
         body['new_achievements'] = achievements.describe(achievements.award(request.user))
         return Response(body)
+
+    @action(detail=True, methods=['post'], parser_classes=[JSONParser, MultiPartParser, FormParser])
+    def report(self, request, pk=None):
+        """A rider's one tap: "this feature has changed". Optional note and photo. Goes to the team's queue."""
+        feature = self.get_object()
+        photo = request.FILES.get('photo')
+        if photo and photo.size > 25 * 1024 * 1024:
+            raise ValidationError('That photo is over 25 MB.')
+        try:
+            report = certification.report(feature, request.user, (request.data.get('note') or '').strip(), photo)
+        except certification.CertificationError as exc:
+            raise ValidationError(str(exc))
+        return Response({'id': report.id, 'status': report.status}, status=status.HTTP_201_CREATED)

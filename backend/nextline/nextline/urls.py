@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
+from django.views.static import serve
 from rest_framework.routers import DefaultRouter
 
 from rides.views import RideViewSet, crash_alert, level_rules, progress
@@ -14,6 +15,7 @@ router.register(r'features', FeatureViewSet, basename='feature')
 urlpatterns = [
     path('api/', include(router.urls)),
     path('api/', include('progression.urls')),
+    path('api/', include('trails.urls')),
     path('api/progress/', progress, name='progress'),
     path('api/level-rules/', level_rules, name='level-rules'),
     path('api/crash-alerts/', crash_alert, name='crash-alert'),
@@ -23,3 +25,7 @@ urlpatterns = [
     # Bots scan /admin/ for login pages; set ADMIN_URL to something unguessable in production.
     path(settings.ADMIN_URL, admin.site.urls),
 ]
+
+if settings.DEBUG:
+    # Feature photos and clips while developing. Only features/: riders' own videos stay private.
+    urlpatterns.append(re_path(r'^media/(?P<path>features/.+)$', serve, {'document_root': settings.MEDIA_ROOT}))
