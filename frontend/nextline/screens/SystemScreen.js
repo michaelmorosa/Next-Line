@@ -9,7 +9,7 @@ import NextUpList from '../components/NextUpList';
 import TrailMap from '../components/TrailMap';
 import { ErrorState, Header, Loading, ProgressBar } from '../components/ui';
 import { progressLine } from '../utils/features';
-import { km } from '../utils/format';
+import { miles } from '../utils/format';
 import { DIFFICULTY, colors, ui } from '../theme';
 
 export default function SystemScreen() {
@@ -61,7 +61,7 @@ export default function SystemScreen() {
         return (
           <TouchableOpacity key={t.id} style={ui.card} onPress={() => navigation.navigate('TrailFeatures', { id: t.id })}>
             <View style={ui.between}>
-              <Text style={[ui.label, { color: difficulty.color }]}>{difficulty.label} · {km(t.length_m)} km</Text>
+              <Text style={[ui.label, { color: difficulty.color }]}>{difficulty.label} · {miles(t.length_m)} mi</Text>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
             </View>
             <Text style={[ui.strong, { fontSize: 18 }]}>{t.name}</Text>

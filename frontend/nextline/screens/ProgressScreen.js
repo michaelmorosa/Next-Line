@@ -9,7 +9,7 @@ import SuggestionRow from '../components/SuggestionRow';
 import NextUpList from '../components/NextUpList';
 import { ErrorState, Grid, Loading, ProgressBar, StatTile } from '../components/ui';
 import { outcomeLabel, points } from '../utils/features';
-import { climbRate, dateOnly, delta, duration } from '../utils/format';
+import { climbRate, dateOnly, delta, duration, feet, miles } from '../utils/format';
 import { STATUS_COLORS, TYPE_ICONS, colors, fonts, ui } from '../theme';
 
 // Achievements earned this recently get a NEW tag.
@@ -233,7 +233,7 @@ export default function ProgressScreen() {
         {hasClimbing ? (
           <>
             <WeekBars weeks={climbing.weeks} field="climb_rate" />
-            <Text style={ui.small}>Climb rate: vertical metres per hour on climbs. Higher is fitter.</Text>
+            <Text style={ui.small}>Climb rate: vertical feet per hour on climbs. Higher is fitter.</Text>
             <Grid>
               <StatTile
                 value={climbing.latest?.climb_pace_held != null ? `${climbing.latest.climb_pace_held}%` : '—'}
@@ -241,7 +241,7 @@ export default function ProgressScreen() {
                 center
                 small
               />
-              <StatTile value={`${climbing.longest_nonstop_m} m`} sub="longest non-stop climb" center small />
+              <StatTile value={`${feet(climbing.longest_nonstop_m)} ft`} sub="longest non-stop climb" center small />
             </Grid>
           </>
         ) : (
@@ -302,7 +302,7 @@ export default function ProgressScreen() {
 
       <Text style={[ui.small, { textAlign: 'center' }]}>
         This week: {totals.rides_this_week} ride{totals.rides_this_week === 1 ? '' : 's'} ·{' '}
-        {(totals.distance_this_week_m / 1000).toFixed(1)} km · {totals.climb_this_week_m} m up · {totals.descent_this_week_m} m down
+        {miles(totals.distance_this_week_m)} mi · {feet(totals.climb_this_week_m)} ft up · {feet(totals.descent_this_week_m)} ft down
       </Text>
     </ScrollView>
   );

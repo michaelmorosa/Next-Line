@@ -132,7 +132,7 @@ class Reason(models.TextChoices):
     CHALLENGE = 'challenge', 'Challenge complete'
     STREAK = 'streak', 'Practice week'
     RIDE = 'ride', 'Ride'
-    DESCENT = 'descent', 'Metres descended'
+    DESCENT = 'descent', 'Descent'
     JUMPS = 'jumps', 'Jumps'
     FEATURE = 'feature', 'Feature cleaned (before grades)'
     FIRST_CLEAN = 'first_clean', 'First clean'

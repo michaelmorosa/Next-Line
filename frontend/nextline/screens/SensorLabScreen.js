@@ -9,6 +9,7 @@ import { Accelerometer } from 'expo-sensors';
 import * as Sharing from 'expo-sharing';
 import { createJumpDetector, magnitude } from '../recording/detectors';
 import useRecorder from '../recording/useRecorder';
+import { mph } from '../utils/format';
 import { Button, Grid, Header, StatTile } from '../components/ui';
 import { colors, ui } from '../theme';
 
@@ -112,8 +113,8 @@ export default function SensorLabScreen() {
       <Grid>
         <StatTile label="Jumps found" value={stats.jumps.length}
           sub={stats.jumps.length ? stats.jumps.slice(-6).map((a) => `${a.toFixed(2)}s`).join(' · ') : 'none yet'} />
-        <StatTile label="GPS speed" value={stats.speed == null ? '—' : `${(stats.speed * 3.6).toFixed(0)}`}
-          sub="km/h · jumps need 5+" />
+        <StatTile label="GPS speed" value={stats.speed == null ? '—' : `${mph(stats.speed)}`}
+          sub="mph · jumps need 3+" />
       </Grid>
       <Text style={ui.small}>{stats.samples.toLocaleString()} samples logged</Text>
 

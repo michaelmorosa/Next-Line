@@ -19,7 +19,7 @@ from .models import (
 )
 
 # A capture belongs to the nearest shared trail within this distance of its GPS point.
-NEAREST_TRAIL_M = 150
+NEAREST_TRAIL_M = 152.4  # 500 ft
 PHOTO_LONG_EDGE = 2048
 THUMB_LONG_EDGE = 640
 DAYS_PER_MONTH = 30.44

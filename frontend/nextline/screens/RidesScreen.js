@@ -6,7 +6,7 @@ import { useAuth } from '../AuthContext';
 import { listPending } from '../recording/storage';
 import { uploadPending } from '../recording/uploads';
 import { Button, CircleButton, ErrorState, Loading } from '../components/ui';
-import { day, feetDown, km, metres, shortDuration } from '../utils/format';
+import { day, feet, feetDown, miles, shortDuration } from '../utils/format';
 import { colors, fonts, ui } from '../theme';
 
 function RideRow({ ride, onPress }) {
@@ -18,7 +18,7 @@ function RideRow({ ride, onPress }) {
       </View>
       <Text style={styles.rideTitle} numberOfLines={1}>{ride.title || 'Ride'}</Text>
       <Text style={ui.small}>
-        {km(ride.distance_m)} km · {metres(ride.climb_m)} m up · {metres(ride.descent_m)} m down · {ride.jump_count} jumps
+        {miles(ride.distance_m)} mi · {feet(ride.climb_m)} ft up · {feet(ride.descent_m)} ft down · {ride.jump_count} jumps
         {ride.lap_count ? ` · ${ride.lap_count} lap${ride.lap_count > 1 ? 's' : ''}` : ''}
         {ride.lap_count ? ` · ${feetDown(ride.touchdowns)}` : ''}
         {ride.flow_score != null ? ` · flow ${Math.round(ride.flow_score)}` : ''}

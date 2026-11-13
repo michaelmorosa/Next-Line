@@ -18,8 +18,10 @@ test('labels', () => {
 });
 
 test('measurements show only what a feature has', () => {
-  assert.deepEqual(measurementList({ drop_height_m: 0.9 }), [{ label: 'Drop', value: '0.9 m' }]);
-  assert.deepEqual(measurementList({ gap_length_m: 4, steepness_deg: 30 }).map((m) => m.value), ['4 m', '30°']);
+  assert.deepEqual(measurementList({ drop_height_m: 0.9 }), [{ label: 'Drop', value: '3 ft' }]);
+  assert.deepEqual(measurementList({ gap_length_m: 7 }), [{ label: 'Gap', value: '23 ft' }]);
+  assert.deepEqual(measurementList({ drop_height_m: 1.5 }), [{ label: 'Drop', value: '4.9 ft' }]);
+  assert.deepEqual(measurementList({ gap_length_m: 4, steepness_deg: 30 }).map((m) => m.value), ['13 ft', '30°']);
   assert.deepEqual(measurementList(), []);
 });
 

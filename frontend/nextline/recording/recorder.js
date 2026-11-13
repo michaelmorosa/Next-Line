@@ -99,7 +99,7 @@ export async function saveSettings(settings) {
 
 // { ok, background, canAskAgain, approximate }. Background ("Always") permission is what lets recording continue
 // with the screen off; without it, recording only works while the app is open. Precise location is required:
-// approximate location is off by kilometres, and every fix would be dropped.
+// approximate location is off by a mile or more, and every fix would be dropped.
 export async function requestPermissions() {
   const fg = await Location.requestForegroundPermissionsAsync();
   if (fg.status !== 'granted') return { ok: false, background: false, canAskAgain: fg.canAskAgain };
@@ -184,7 +184,7 @@ function resetDetectors() {
 
 function permissionError(permission) {
   const err = new Error(permission.approximate
-    ? 'Next Line needs your precise location: approximate location is off by kilometres. In Settings, open '
+    ? 'Next Line needs your precise location: approximate location is off by a mile or more. In Settings, open '
       + 'Location and turn on "Use precise location" (iPhone: "Precise Location").'
     : 'Location permission is needed to record a ride.');
   err.canAskAgain = permission.canAskAgain;

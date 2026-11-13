@@ -8,12 +8,12 @@ import { useAuth } from '../AuthContext';
 import FlowRing from '../components/FlowRing';
 import RideMap from '../components/RideMap';
 import { Button, CircleButton, ErrorState, Grid, Header, Loading, ProgressBar, StatTile } from '../components/ui';
-import { climbRate, day, delta, duration, feetDown, km, localDay, metres, seconds, shortDuration, xp } from '../utils/format';
+import { climbRate, day, delta, duration, feet, feetDown, localDay, miles, seconds, shortDuration, xp } from '../utils/format';
 import { colors, fonts, ui } from '../theme';
 
 function shareText(ride) {
   const lines = [`${ride.title || 'Ride'} · ${day(ride.started_at)}`];
-  lines.push(`${km(ride.distance_m)} km · ${metres(ride.climb_m)} m up · ${metres(ride.descent_m)} m down`);
+  lines.push(`${miles(ride.distance_m)} mi · ${feet(ride.climb_m)} ft up · ${feet(ride.descent_m)} ft down`);
   if (ride.climb_rate) lines.push(`Climbing ${climbRate(ride.climb_rate)}`);
   if (ride.jump_count) lines.push(`${ride.jump_count} jumps · biggest air ${seconds(ride.biggest_air_s)}`);
   if (ride.pr_count) lines.push(`${ride.pr_count} descent PR${ride.pr_count > 1 ? 's' : ''}`);
@@ -137,7 +137,7 @@ export default function RideSummaryScreen() {
       <View>
         <Text style={ui.title}>{ride.title || 'Ride'}</Text>
         <Text style={ui.subtitle}>
-          {km(ride.distance_m)} km · {metres(ride.climb_m)} m up · {metres(ride.descent_m)} m down · {trailCount} segment{trailCount === 1 ? '' : 's'}
+          {miles(ride.distance_m)} mi · {feet(ride.climb_m)} ft up · {feet(ride.descent_m)} ft down · {trailCount} segment{trailCount === 1 ? '' : 's'}
         </Text>
       </View>
 
@@ -226,7 +226,7 @@ export default function RideSummaryScreen() {
               center
               small
             />
-            <StatTile value={`${Math.round(ride.longest_nonstop_climb_m)} m`} sub="longest non-stop" center small />
+            <StatTile value={`${feet(ride.longest_nonstop_climb_m)} ft`} sub="longest non-stop" center small />
           </Grid>
           <Text style={ui.small}>{staminaLine(ride)}</Text>
         </View>

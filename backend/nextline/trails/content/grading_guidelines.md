@@ -27,30 +27,30 @@ Draft. Edit this in the admin (Trails → Grading guidelines). Everyone who grad
 
 | Grade | What it looks like |
 |---|---|
-| 1 | Roll-down under 30 cm, can be rolled at walking pace |
-| 2 | 30–50 cm roll-off, sloped landing |
-| 3 | 50–70 cm, rollable, sloped landing |
-| 4 | 70–90 cm, needs a little speed and a manual or lift, sloped landing |
-| 5 | 90 cm–1.2 m, not rollable, good landing |
-| 6 | 1.2–1.5 m, or smaller to flat |
-| 7 | 1.5–2 m, committing |
-| 8 | 2–2.5 m, or 1.5 m+ to flat |
-| 9 | 2.5–3.5 m |
-| 10 | Over 3.5 m or very high consequence |
+| 1 | Roll-down under 12 in, can be rolled at walking pace |
+| 2 | 12–20 in roll-off, sloped landing |
+| 3 | 20–28 in, rollable, sloped landing |
+| 4 | 28–36 in, needs a little speed and a manual or lift, sloped landing |
+| 5 | 3–4 ft, not rollable, good landing |
+| 6 | 4–5 ft, or smaller to flat |
+| 7 | 5–6½ ft, committing |
+| 8 | 6½–8 ft, or 5 ft+ to flat |
+| 9 | 8–11 ft |
+| 10 | Over 11 ft or very high consequence |
 
 ## Jumps (gap from lip to knuckle, tables count as half)
 
 | Grade | What it looks like |
 |---|---|
 | 1 | Rollers and small tables you can roll |
-| 2 | Small tabletops, under 2 m |
-| 3 | Tabletops 2–3 m |
-| 4 | Tables 3–4 m, or small rollable gaps |
-| 5 | Gaps up to 3 m with a soft knuckle |
-| 6 | Gaps 3–5 m |
-| 7 | Gaps 5–7 m, or step-ups and step-downs that need precise speed |
-| 8 | Gaps 7–10 m |
-| 9 | Gaps 10–13 m |
+| 2 | Small tabletops, under 6 ft |
+| 3 | Tabletops 6–10 ft |
+| 4 | Tables 10–13 ft, or small rollable gaps |
+| 5 | Gaps up to 10 ft with a soft knuckle |
+| 6 | Gaps 10–16 ft |
+| 7 | Gaps 16–23 ft, or step-ups and step-downs that need precise speed |
+| 8 | Gaps 23–33 ft |
+| 9 | Gaps 33–43 ft |
 | 10 | Bigger, or high consequence |
 
 ## Corners
@@ -62,7 +62,7 @@ Draft. Edit this in the admin (Trails → Grading guidelines). Everyone who grad
 ## Rock gardens and roots
 
 1 a few scattered rocks or roots · 2 a short rough patch · 3 a longer rough patch with one clear line ·
-4 line choice matters, some ledges · 5 continuous chunk with ledges up to 30 cm · 6 large rocks, needs speed
+4 line choice matters, some ledges · 5 continuous chunk with ledges up to 12 in · 6 large rocks, needs speed
 and lifts · 7 big ledges, holes or wet roots that punish the wrong line · 8–10 the hardest chunk around:
 big moves back to back with consequences.
 
@@ -74,13 +74,13 @@ big moves back to back with consequences.
 
 ## Skinnies (width and height above ground)
 
-1 wide and low · 2 30 cm wide, low · 3 20 cm wide, low · 4 20 cm, waist high or with a turn · 5 15 cm, low ·
-6 15 cm, high or with a turn · 7 10 cm · 8–10 narrow, high, and with drops or turns.
+1 wide and low · 2 12 in wide, low · 3 8 in wide, low · 4 8 in, waist high or with a turn · 5 6 in, low ·
+6 6 in, high or with a turn · 7 4 in · 8–10 narrow, high, and with drops or turns.
 
 ## Climbs (technical moves going up)
 
-1 smooth short pitch · 2 steeper pitch · 3 loose or rooty pitch · 4 a ledge up to 15 cm · 5 ledges up to
-25 cm, or a long steep loose pitch · 6 ledges 25–35 cm · 7 linked ledges, tight turns on a steep ·
+1 smooth short pitch · 2 steeper pitch · 3 loose or rooty pitch · 4 a ledge up to 6 in · 5 ledges up to
+10 in, or a long steep loose pitch · 6 ledges 10–14 in · 7 linked ledges, tight turns on a steep ·
 8–10 the hardest tech climbs, needing ratcheting, hops and precise balance.
 
 ## Other

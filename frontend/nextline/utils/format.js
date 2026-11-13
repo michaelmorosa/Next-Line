@@ -14,12 +14,30 @@ export function shortDuration(seconds) {
   return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
 }
 
-export function km(metres) {
-  return (metres / 1000).toFixed(metres < 10000 ? 2 : 1);
+// The API works in metres; riders see US units.
+const M_PER_MILE = 1609.344;
+const FT_PER_M = 3.28084;
+
+// Miles from metres, as a number string: "1.24", or "12.4" from 10 miles up.
+export function miles(m) {
+  const mi = (m || 0) / M_PER_MILE;
+  return mi.toFixed(mi < 10 ? 2 : 1);
 }
 
-export function metres(m) {
-  return Math.round(m || 0).toLocaleString();
+// Whole feet from metres, as a number string: "1,234".
+export function feet(m) {
+  return Math.round((m || 0) * FT_PER_M).toLocaleString();
+}
+
+// A short length in feet with its unit: "3 ft", "4.9 ft", "23 ft". Tenths only below 10 ft.
+export function shortFeet(m) {
+  const ft = (m || 0) * FT_PER_M;
+  return `${ft < 10 ? Number(ft.toFixed(1)) : Math.round(ft)} ft`;
+}
+
+// Metres per second to whole miles per hour.
+export function mph(metresPerSecond) {
+  return Math.round((metresPerSecond || 0) * 2.23694);
 }
 
 export function seconds(s) {
@@ -47,9 +65,9 @@ export function shortDate(iso) {
   return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
 }
 
-// Climb rate in vertical metres per hour: "890 m/h".
+// Climb rate, given in vertical metres per hour, shown in feet: "2,920 ft/h".
 export function climbRate(v) {
-  return v == null ? '—' : `${Math.round(v).toLocaleString()} m/h`;
+  return v == null ? '—' : `${feet(v)} ft/h`;
 }
 
 // Arrow for a trail's direction.

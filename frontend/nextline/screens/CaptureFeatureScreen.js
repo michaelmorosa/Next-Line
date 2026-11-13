@@ -12,6 +12,7 @@ import { useAuth } from '../AuthContext';
 import { Button, Chip, Header } from '../components/ui';
 import { captures, keepPhoto, uploadCaptures } from '../utils/capture';
 import { uuid } from '../utils/features';
+import { shortFeet } from '../utils/format';
 import {
   FEATURE_TYPES, GRADES, MAX_ACCURACY_M, PHOTO_SLOTS, betterFix, captureBody, captureProblems, measurementFor,
 } from '../utils/team';
@@ -122,7 +123,7 @@ export default function CaptureFeatureScreen() {
           <Ionicons name="locate" size={22} color={accuracyOk ? colors.good : colors.warn} />
           <View style={{ flex: 1 }}>
             <Text style={ui.strong}>
-              {gpsError ? 'No GPS' : !fix ? 'Finding GPS…' : `±${Math.round(fix.accuracy ?? 0)} m`}
+              {gpsError ? 'No GPS' : !fix ? 'Finding GPS…' : `±${shortFeet(fix.accuracy)}`}
             </Text>
             <Text style={ui.small}>
               {gpsError || (accuracyOk ? 'Stand at the feature. The best fix is kept.' : 'Stand still at the feature for a moment.')}
@@ -176,7 +177,7 @@ export default function CaptureFeatureScreen() {
           <View style={styles.chips}>
             <Chip label="Nearest" selected={!trailId} onPress={() => setTrailId(null)} />
             {(trails || []).map((t) => (
-              <Chip key={t.id} label={`${t.name}${t.distance_m != null ? ` · ${t.distance_m} m` : ''}`}
+              <Chip key={t.id} label={`${t.name}${t.distance_m != null ? ` · ${shortFeet(t.distance_m)}` : ''}`}
                 selected={trailId === t.id} onPress={() => setTrailId(t.id)} />
             ))}
           </View>

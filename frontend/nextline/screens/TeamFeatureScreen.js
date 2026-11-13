@@ -10,7 +10,9 @@ import { useAuth } from '../AuthContext';
 import { Button, Chip, ErrorState, Header, Loading } from '../components/ui';
 import { discardPhotos, keepPhoto, uploadPhoto } from '../utils/capture';
 import { uuid } from '../utils/features';
-import { FEATURE_TYPES, GRADES, PHOTO_SLOTS, measurementFor, parseMeasurement } from '../utils/team';
+import {
+  FEATURE_TYPES, GRADES, PHOTO_SLOTS, measurementFor, measurementFromApi, measurementToApi, parseMeasurement,
+} from '../utils/team';
 import { colors, fonts, ui } from '../theme';
 
 const TEXT_FIELDS = [
@@ -68,7 +70,7 @@ export default function TeamFeatureScreen() {
     if (m && typeof body[m.field] === 'string') {
       const n = parseMeasurement(body[m.field]);
       if (n === undefined) throw new Error('The measurement should be a number.');
-      body[m.field] = n;
+      body[m.field] = measurementToApi(m, n);
     }
     await sendJson(`/api/team/features/${f.id}/`, 'PATCH', body, logout);
   });
@@ -143,7 +145,9 @@ export default function TeamFeatureScreen() {
           </View>
           {measurement && (
             <TextInput style={ui.input} placeholder={measurement.label} placeholderTextColor={colors.muted}
-              keyboardType="decimal-pad" value={value(measurement.field) == null ? '' : String(value(measurement.field))}
+              keyboardType="decimal-pad"
+              value={measurement.field in edits ? edits[measurement.field]
+                : String(measurementFromApi(measurement, f[measurement.field]) ?? '')}
               onChangeText={edit(measurement.field)} />
           )}
         </View>

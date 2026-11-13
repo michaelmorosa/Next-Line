@@ -9,7 +9,7 @@ test('a capture needs GPS, a type and a grade', () => {
   assert.deepEqual(captureProblems({ position: null, type: null, grade: null, measurementText: '' }),
     ['Waiting for GPS.', 'Pick a type.', 'Pick a grade.']);
   assert.deepEqual(captureProblems({ position, type: 'drop', grade: 3, measurementText: '' }), []);
-  assert.match(captureProblems({ position: { ...position, accuracy: 48 }, type: 'drop', grade: 3 })[0], /±48 m/);
+  assert.match(captureProblems({ position: { ...position, accuracy: 48 }, type: 'drop', grade: 3 })[0], /±157 ft\. Wait for ±100 ft/);
   assert.deepEqual(captureProblems({ position, type: 'drop', grade: 3, measurementText: 'tall' }),
     ['The measurement should be a number.']);
 });
@@ -24,8 +24,8 @@ test('measurements parse commas and blanks', () => {
 
 test('capture body', () => {
   assert.deepEqual(captureBody({ clientId: 'c1', position, type: 'drop', grade: 4, name: '  Big step ', trailId: 9,
-    measurementText: '0.9' }), {
-    client_id: 'c1', type: 'drop', grade: 4, lat: 45.1, lng: -122.2, name: 'Big step', trail: 9, drop_height_m: 0.9,
+    measurementText: '3' }), {
+    client_id: 'c1', type: 'drop', grade: 4, lat: 45.1, lng: -122.2, name: 'Big step', trail: 9, drop_height_m: 0.914,
   });
   // No trail picked: the server uses the nearest. No name: it makes one. Corners have no measurement.
   assert.deepEqual(captureBody({ clientId: 'c2', position, type: 'corner', grade: 2, name: '', measurementText: '3' }), {

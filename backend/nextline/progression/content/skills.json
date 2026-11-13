@@ -75,7 +75,7 @@
       "description": "Letting the bike move underneath you while your body stays calm: the bike leans, tips and rises while your hips and head follow a smooth line.",
       "why": "Cornering, steeps, drops and wheel lifts all ask the bike to move one way while you stay balanced. Riders who keep their body glued to the bike get thrown around by it.",
       "drills": [
-        {"name": "Figure eights", "how": "Mark two cones 4 m apart on flat ground. Ride figure eights around them, leaning the bike under you while your chest stays upright and over the bottom bracket. 5 minutes."},
+        {"name": "Figure eights", "how": "Mark two cones 13 ft apart on flat ground. Ride figure eights around them, leaning the bike under you while your chest stays upright and over the bottom bracket. 5 minutes."},
         {"name": "Push-pull", "how": "Roll slowly in attack position and push the bike forward with straight arms, then pull it back to bent arms, without your hips moving. 10 reps a pass, 5 passes."},
         {"name": "Lean-only turns", "how": "On a grassy slope, turn by leaning the bike only, keeping your shoulders level with the horizon. Do 10 turns each way."}
       ],
@@ -130,7 +130,7 @@
       "why": "Full pedal strokes in rocky terrain mean pedal strikes, which stop you dead. Ratcheting keeps power going through tech, up and down.",
       "drills": [
         {"name": "Quarter strokes", "how": "On flat ground, move using only quarter strokes between 3 o'clock and 6 o'clock with your lead foot, back-pedalling between them. 3 lengths of a car park."},
-        {"name": "Pedal-strike course", "how": "Lay sticks across a gentle climb every metre. Ratchet through so your pedals stay clear of them. 5 runs."},
+        {"name": "Pedal-strike course", "how": "Lay sticks across a gentle climb every few feet. Ratchet through so your pedals stay clear of them. 5 runs."},
         {"name": "Rocky climb", "how": "Pick a rocky climb you usually dab on. Ratchet through the rough part. 5 attempts."}
       ],
       "mastery_test": "You've got it when you can climb a rocky section by ratcheting with no pedal strikes and no dabs.",
@@ -147,11 +147,11 @@
       "description": "Getting up a step on a climb: lift the front onto it, power stroke, then shift your weight forward to unweight and drive the rear wheel up.",
       "why": "Ledges are what end most technical climbs. Getting both wheels up a step while keeping momentum is the key move for clean climbs.",
       "drills": [
-        {"name": "Curb ups", "how": "Ride up a 10–15 cm curb from a slow roll: front lift, weight forward, rear up. 10 each side."},
+        {"name": "Curb ups", "how": "Ride up a 4–6 in curb from a slow roll: front lift, weight forward, rear up. 10 each side."},
         {"name": "Two-step", "how": "Find two steps close together and climb both without stopping. 5 attempts."},
         {"name": "Slow-speed ledge", "how": "Approach a trail ledge from a track stand, then go up it from almost zero speed. 5 attempts."}
       ],
-      "mastery_test": "You've got it when you can climb a 20 cm ledge on a trail climb without dabbing, 4 times out of 5.",
+      "mastery_test": "You've got it when you can climb a 8 in ledge on a trail climb without dabbing, 4 times out of 5.",
       "media": [{"type": "video", "url": null, "caption": "Front lift and rear unweight up a ledge"}],
       "tags": ["technical", "drop"],
       "draft": true
@@ -165,7 +165,7 @@
       "description": "Cleaning steep, rocky, rooty climbs by reading the line, picking where to put power down, and linking ledges, ratchets and kicks without stopping.",
       "why": "Clean tech climbs mean you get to the top of the trail with energy left, and they show complete control at low speed, which most descents also need.",
       "drills": [
-        {"name": "Section repeats", "how": "Pick the hardest 20 m of a tech climb and session it until you clean it. Log how many tries it took."},
+        {"name": "Section repeats", "how": "Pick the hardest 60 ft of a tech climb and session it until you clean it. Log how many tries it took."},
         {"name": "No-dab climb", "how": "Ride a whole technical climb aiming for zero dabs. Count your dabs and try to beat it."},
         {"name": "Line walk", "how": "Walk a climb you can't clean and plan exactly where each wheel goes, then ride your plan."}
       ],
@@ -239,7 +239,7 @@
       "drills": [
         {"name": "Gravel circles", "how": "On loose gravel, ride circles that get tighter, pushing hard into the outside pedal. 5 minutes each way."},
         {"name": "Brake and release", "how": "On a loose corner, brake hard on the straight before, then let go fully as you lean. 10 runs."},
-        {"name": "Same corner, more speed", "how": "Session one loose corner and enter 1 km/h faster each run until the tyres start to drift."}
+        {"name": "Same corner, more speed", "how": "Session one loose corner and enter 1 mph faster each run until the tyres start to drift."}
       ],
       "mastery_test": "You've got it when you can ride loose, dry corners at a steady speed without the front washing out, and recover a small rear slide without dabbing.",
       "media": [{"type": "video", "url": null, "caption": "Weighting the outside pedal on loose dirt"}],
@@ -273,7 +273,7 @@
       "description": "Turning on the front wheel: brake the front, let the rear lift, and swing it around so you can make switchbacks too tight to ride round.",
       "why": "The tightest switchbacks on steep trails can't be ridden normally. A nose pivot lets you clean them instead of walking.",
       "drills": [
-        {"name": "Flat ground pivots", "how": "From a slow roll, brake the front, lift the rear and move it 20–30 cm sideways. 10 each way."},
+        {"name": "Flat ground pivots", "how": "From a slow roll, brake the front, lift the rear and move it 8–12 in sideways. 10 each way."},
         {"name": "Quarter turns", "how": "Build to swinging the rear a quarter turn before it lands. 10 each way."},
         {"name": "Tight switchback", "how": "Session a tight switchback you usually walk, using a pivot halfway round. 10 attempts."}
       ],
@@ -291,7 +291,7 @@
       "description": "Deliberately sliding the rear wheel into a corner to point the bike at the exit, then catching it with your weight on the outside pedal.",
       "why": "Fast riders on loose trails slide on purpose. Steering the rear wheel lets you take sharper lines without losing speed.",
       "drills": [
-        {"name": "Brake slides", "how": "On a loose flat area, brake the rear and steer to slide it 30 cm, then release. 10 each way."},
+        {"name": "Brake slides", "how": "On a loose flat area, brake the rear and steer to slide it 12 in, then release. 10 each way."},
         {"name": "Slide and catch", "how": "In a wide loose corner, start the slide at entry and catch it before the apex. 10 runs."},
         {"name": "Line choice", "how": "Pick a corner and drift into the same exit line 5 times in a row."}
       ],
@@ -347,9 +347,9 @@
       "drills": [
         {"name": "Tiny lifts", "how": "Walk-speed rolls: brake the front sharply and let the rear come up a few cm. 15 reps."},
         {"name": "Hold it", "how": "Build up to holding the rear in the air for a second before setting it down. 10 reps."},
-        {"name": "Rear placement", "how": "Lift the rear and set it down 10 cm to one side. 10 each way."}
+        {"name": "Rear placement", "how": "Lift the rear and set it down 4 in to one side. 10 each way."}
       ],
-      "mastery_test": "You've got it when you can lift the rear 20 cm from a slow roll and set it down with control, 5 times in a row.",
+      "mastery_test": "You've got it when you can lift the rear 8 in from a slow roll and set it down with control, 5 times in a row.",
       "media": [{"type": "video", "url": null, "caption": "Stoppie from a slow roll"}],
       "tags": ["technical"],
       "draft": true
@@ -367,7 +367,7 @@
         {"name": "Line to stick", "how": "Hop a line on the ground, then a stick, then a low object. Only raise the height when both wheels clear 5 times."},
         {"name": "Trail hop", "how": "On an easy trail, hop over 5 small roots or rocks instead of rolling them."}
       ],
-      "mastery_test": "You've got it when you can bunny hop a 15 cm (6 inch) object from a roll with both wheels clearing it, 4 times out of 5.",
+      "mastery_test": "You've got it when you can bunny hop a 6 in object from a roll with both wheels clearing it, 4 times out of 5.",
       "media": [{"type": "video", "url": null, "caption": "Bunny hop in two parts"}],
       "tags": ["jump", "technical"],
       "draft": true
@@ -400,10 +400,10 @@
       "why": "Side hops get you out of ruts, around switchbacks and onto ledges where there's no run-up. They're the hardest test of hop power and balance.",
       "drills": [
         {"name": "Line hops", "how": "Side hop over a chalk line from a track stand. 10 each way."},
-        {"name": "Height", "how": "Side hop onto a 10 cm board, then 20 cm. 10 each way."},
+        {"name": "Height", "how": "Side hop onto a 4 in board, then 8 in. 10 each way."},
         {"name": "Trail use", "how": "Find a rut or rock and side hop out of it onto a better line. 10 attempts."}
       ],
-      "mastery_test": "You've got it when you can side hop 30 cm sideways onto a 20 cm step from a standstill, both directions.",
+      "mastery_test": "You've got it when you can side hop 12 in sideways onto a 8 in step from a standstill, both directions.",
       "media": [{"type": "video", "url": null, "caption": "Side hop onto a ledge"}],
       "tags": ["technical"],
       "draft": true
@@ -475,7 +475,7 @@
         {"name": "Watch and follow", "how": "Watch a rider who clears the gap. Follow them in at their speed, with a safe distance between you."},
         {"name": "Commit check", "how": "Before trying, roll the takeoff and landing on foot. Only go when your speed is the same as on the matched tabletop."}
       ],
-      "mastery_test": "You've got it when you can clear a small gap jump (1–2 m) and land on the down ramp, 5 times in a row.",
+      "mastery_test": "You've got it when you can clear a small gap jump (3–6 ft) and land on the down ramp, 5 times in a row.",
       "media": [{"type": "video", "url": null, "caption": "Gap jump: matching speed from a tabletop"}],
       "tags": ["gap", "jump"],
       "draft": true
@@ -583,7 +583,7 @@
         {"name": "Push the bars", "how": "At the edge, extend your arms to put the front wheel on the ground, then let the back wheel follow while you stay centred."},
         {"name": "Trail ledges", "how": "Ride 3 small trail ledges at walking pace without braking on the edge."}
       ],
-      "mastery_test": "You've got it when you can roll off a 30 cm (1 foot) ledge at walking pace, staying centred with no nose-dive, 5 times in a row.",
+      "mastery_test": "You've got it when you can roll off a 1 ft ledge at walking pace, staying centred with no nose-dive, 5 times in a row.",
       "media": [{"type": "video", "url": null, "caption": "Roll-off: push the front down"}],
       "tags": ["drop"],
       "draft": true
@@ -599,9 +599,9 @@
       "drills": [
         {"name": "Manual the lip", "how": "On a curb, ride at a moderate speed and do a small manual as the front wheel reaches the edge, so both wheels land together. 10 times."},
         {"name": "Land and absorb", "how": "Aim to land both wheels at once and soak it up with your legs. Film one and check."},
-        {"name": "Step up the height", "how": "Move from a curb to a 40–60 cm drop only when the smaller one feels boring."}
+        {"name": "Step up the height", "how": "Move from a curb to a 16–24 in drop only when the smaller one feels boring."}
       ],
-      "mastery_test": "You've got it when you can ride off a 50 cm (about 2 foot) drop at trail speed and land both wheels together, 5 times in a row.",
+      "mastery_test": "You've got it when you can ride off a 20 in drop at trail speed and land both wheels together, 5 times in a row.",
       "media": [{"type": "video", "url": null, "caption": "Small drop: manual the lip"}],
       "tags": ["drop"],
       "draft": true
@@ -612,14 +612,14 @@
       "branch": "drops",
       "tier": 4,
       "prerequisites": ["small_drops", "bunny_hop"],
-      "description": "Drops over 1 m: matching speed to the landing, a confident pop or manual off the lip, and landing on a down slope with full-body absorption.",
+      "description": "Drops over 3 ft: matching speed to the landing, a confident pop or manual off the lip, and landing on a down slope with full-body absorption.",
       "why": "Big drops are mostly speed judgement and commitment. Learning them properly is what keeps them from becoming a hospital trip.",
       "drills": [
         {"name": "Landing check", "how": "Before any drop, walk it. Find where the landing slopes down and the speed that puts you there."},
         {"name": "Ladder up", "how": "Ride the next size up only after 5 clean landings on the current size."},
         {"name": "Follow a friend", "how": "Follow a rider who's done the drop, at their speed."}
       ],
-      "mastery_test": "You've got it when you can ride a drop of 1 m or more to a down-sloping landing, landing both wheels together and in control, 3 times in a row.",
+      "mastery_test": "You've got it when you can ride a drop of 3 ft or more to a down-sloping landing, landing both wheels together and in control, 3 times in a row.",
       "media": [{"type": "video", "url": null, "caption": "Big drop to a down slope"}],
       "tags": ["drop"],
       "draft": true
@@ -633,11 +633,11 @@
       "description": "Drops that land on flat ground instead of a slope: you need enough speed to land both wheels together and bent limbs to soak up the hit.",
       "why": "Lots of trail drops land flat. Landing them nose-first or rear-first hurts; landing them flat is the hardest drop to do smoothly.",
       "drills": [
-        {"name": "Curb drops", "how": "Roll off a 30 cm curb to flat at speed, landing both wheels at once. 10 runs."},
+        {"name": "Curb drops", "how": "Roll off a 12 in curb to flat at speed, landing both wheels at once. 10 runs."},
         {"name": "Absorb", "how": "Land with deep knee and elbow bend, counting a soft 'one' as you land. 10 runs."},
-        {"name": "Height ladder", "how": "Move up to 60 cm, then 90 cm drops to flat once each feels easy. 5 runs at each height."}
+        {"name": "Height ladder", "how": "Move up to 2 ft, then 3 ft drops to flat once each feels easy. 5 runs at each height."}
       ],
-      "mastery_test": "You've got it when you can land a 90 cm drop to flat with both wheels together and no harsh bottom-out.",
+      "mastery_test": "You've got it when you can land a 3 ft drop to flat with both wheels together and no harsh bottom-out.",
       "media": [{"type": "video", "url": null, "caption": "Drop to flat, both wheels landing"}],
       "tags": ["drop"],
       "draft": true
@@ -648,14 +648,14 @@
       "branch": "drops",
       "tier": 5,
       "prerequisites": ["big_drops", "drops_to_flat", "steeps"],
-      "description": "Drops of 2 m or more on natural terrain: steep run-ins, rough takeoffs and sloped or rocky landings you have to read on the day.",
+      "description": "Drops of 6 ft or more on natural terrain: steep run-ins, rough takeoffs and sloped or rocky landings you have to read on the day.",
       "why": "Big natural drops are where real skill shows: there's no shaped lip, so judging speed, takeoff and landing is entirely up to you.",
       "drills": [
         {"name": "Scout first", "how": "Walk every big drop before you ride it: run-in, takeoff, landing and run-out. Plan your speed."},
-        {"name": "Step up the height", "how": "Session 1.5 m, then 2 m natural drops, 5 runs each, before going bigger."},
+        {"name": "Step up the height", "how": "Session 5 ft, then 6 ft natural drops, 5 runs each, before going bigger."},
         {"name": "Natural landing", "how": "Ride drops onto a rough or rocky landing, picking the smooth spot. 5 runs."}
       ],
-      "mastery_test": "You've got it when you can ride a 2 m natural drop on a double-black trail with control on the landing.",
+      "mastery_test": "You've got it when you can ride a 6 ft natural drop on a double-black trail with control on the landing.",
       "media": [{"type": "video", "url": null, "caption": "Big natural drop"}],
       "tags": ["drop", "technical"],
       "draft": true
@@ -727,7 +727,7 @@
         {"name": "Rocky climb kicks", "how": "On a rocky climb, kick the rear over the biggest rock. 10 attempts."},
         {"name": "Tech descent kicks", "how": "On a slow, rocky descent, kick over a rock to keep momentum. 10 attempts."}
       ],
-      "mastery_test": "You've got it when you can use a pedal kick to get the rear wheel over a 15 cm rock from walking pace, 4 times out of 5.",
+      "mastery_test": "You've got it when you can use a pedal kick to get the rear wheel over a 6 in rock from walking pace, 4 times out of 5.",
       "media": [{"type": "video", "url": null, "caption": "Pedal kick over a rock"}],
       "tags": ["rock_garden", "technical"],
       "draft": true
@@ -763,7 +763,7 @@
         {"name": "Manual off", "how": "Manual the front off a small ledge so the wheels land together. 10 runs."},
         {"name": "Ledge into rocks", "how": "Ride a ledge that lands into more rocks, staying off the brakes on the landing. 5 runs."}
       ],
-      "mastery_test": "You've got it when you can ride a 50 cm rock ledge in a rock garden with both wheels landing smoothly and keep going without stopping.",
+      "mastery_test": "You've got it when you can ride a 20 in rock ledge in a rock garden with both wheels landing smoothly and keep going without stopping.",
       "media": [{"type": "video", "url": null, "caption": "Ledge drop in a rock garden"}],
       "tags": ["rock_garden", "drop", "technical"],
       "draft": true

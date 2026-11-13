@@ -16,6 +16,7 @@ from rest_framework.test import APIClient
 from progression import content
 
 from . import certification
+from .admin import FeatureForm
 from .apps import TRAIL_TEAM_GROUP
 from .models import Feature, FeatureMedia, FeatureReport, Trail, TrailSystem
 
@@ -108,7 +109,7 @@ class CaptureTests(TeamTestCase):
     def test_point_must_be_near_the_chosen_trail(self):
         res = self.capture(trail=self.trail.id, lat=45.01)
         self.assertEqual(res.status_code, 400)
-        self.assertIn('150 m', str(res.data))
+        self.assertIn('500 ft', str(res.data))
 
     def test_riders_cannot_use_the_team_api(self):
         self.assertEqual(self.capture(client=self.rider_client).status_code, 403)
@@ -332,3 +333,13 @@ class LadderAndAdminTests(TeamTestCase):
         res = self.client.get(f'/admin/trails/feature/{feature_id}/change/')
         self.assertContains(res, 'Next Line grading guidelines')
         self.assertContains(res, 'Small drops')  # the skill-tag picker
+
+    def test_feature_form_measures_in_feet(self):
+        feature = Feature.objects.get(pk=self.capture(drop_height_m=0.9144).data['id'])
+        form = FeatureForm(instance=feature)
+        self.assertEqual(form.initial['drop_height_ft'], 3.0)
+        self.assertNotIn('gap_length_ft', form.initial)
+        form.cleaned_data = {'drop_height_ft': 5, 'gap_length_ft': None}
+        form.save(commit=False)
+        self.assertEqual(feature.drop_height_m, 1.524)
+        self.assertIsNone(feature.gap_length_m)

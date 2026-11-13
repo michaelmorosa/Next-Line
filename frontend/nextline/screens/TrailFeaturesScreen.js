@@ -8,7 +8,7 @@ import FeatureRow from '../components/FeatureRow';
 import SafetyNote from '../components/SafetyNote';
 import { Button, ErrorState, Header, Loading, ProgressBar } from '../components/ui';
 import { progressLine } from '../utils/features';
-import { km } from '../utils/format';
+import { miles } from '../utils/format';
 import { DIFFICULTY, colors, ui } from '../theme';
 
 export default function TrailFeaturesScreen() {
@@ -41,7 +41,7 @@ export default function TrailFeaturesScreen() {
         onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}>
       <Header caption={trail.system_name || 'Trail'} />
       <Text style={ui.title}>{trail.name}</Text>
-      <Text style={[ui.label, { color: difficulty.color }]}>{difficulty.label} · {km(trail.length_m)} km</Text>
+      <Text style={[ui.label, { color: difficulty.color }]}>{difficulty.label} · {miles(trail.length_m)} mi</Text>
 
       <View style={ui.cardRaised}>
         <Text style={ui.strong}>{progressLine(cleaned, trail.features.length)}</Text>

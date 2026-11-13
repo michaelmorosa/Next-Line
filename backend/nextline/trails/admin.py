@@ -16,8 +16,12 @@ from .models import (
 )
 from .sharing import merge_feature, promote
 
-# "Merge into nearest" looks this far for another feature on the same trail.
+# "Merge into nearest" looks this far (about 130 ft) for another feature on the same trail.
 MERGE_SEARCH_M = 40
+
+# Lengths are stored in metres; the trail team types and reads them in feet.
+FT_PER_M = 3.28084
+FEET_FIELDS = (('drop_height_ft', 'drop_height_m'), ('gap_length_ft', 'gap_length_m'))
 
 
 @admin.register(TrailSystem)
@@ -36,12 +40,16 @@ class FeatureInline(admin.TabularInline):
 
 @admin.register(Trail)
 class TrailAdmin(admin.ModelAdmin):
-    list_display = ('name', 'system', 'direction', 'difficulty', 'owner', 'is_auto', 'length_m', 'features_link')
+    list_display = ('name', 'system', 'direction', 'difficulty', 'owner', 'is_auto', 'length', 'features_link')
     list_filter = ('system', 'direction', 'difficulty', 'is_auto')
     search_fields = ('name', 'owner__username')
     raw_id_fields = ('owner',)
     inlines = [FeatureInline]
     actions = ['make_shared']
+
+    @admin.display(description='Length', ordering='length_m')
+    def length(self, trail):
+        return f'{trail.length_m / 1609.344:.2f} mi'
 
     @admin.display(description='Features')
     def features_link(self, trail):
@@ -124,10 +132,26 @@ class FeatureForm(forms.ModelForm):
         help_text='Skills this feature uses. Their tips and drills show under "Stuck?", and they count toward the '
                   "rider's strengths.",
     )
+    drop_height_ft = forms.FloatField(label='Drop height (ft)', required=False, min_value=0)
+    gap_length_ft = forms.FloatField(label='Gap length (ft)', required=False, min_value=0)
 
     class Meta:
         model = Feature
         fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for ft, m in FEET_FIELDS:
+            value = getattr(self.instance, m)
+            if value is not None:
+                self.initial[ft] = round(value * FT_PER_M, 1)
+
+    def save(self, commit=True):
+        for ft, m in FEET_FIELDS:
+            if ft in self.cleaned_data:
+                value = self.cleaned_data[ft]
+                setattr(self.instance, m, None if value is None else round(value / FT_PER_M, 3))
+        return super().save(commit)
 
 
 @admin.register(Feature)
@@ -144,7 +168,7 @@ class FeatureAdmin(admin.ModelAdmin):
                'merge_into_nearest']
     fieldsets = (
         (None, {'fields': ('trail', 'name', 'type', 'grade', 'position', 'lat', 'lng')}),
-        ('Measurements', {'fields': ('drop_height_m', 'gap_length_m', 'steepness_deg')}),
+        ('Measurements', {'fields': ('drop_height_ft', 'gap_length_ft', 'steepness_deg')}),
         ('For riders', {'fields': ('description', 'how_to_ride', 'what_can_go_wrong', 'has_ride_around',
                                    'ride_around_grade', 'ride_around_note', 'skill_tags')}),
         ('Certification', {'fields': ('status', 'created_by', 'submitted_by', 'submitted_at', 'certified_by',
@@ -218,7 +242,7 @@ class FeatureAdmin(admin.ModelAdmin):
             candidates = Feature.objects.filter(trail=feature.trail).exclude(pk__in=queryset)
             nearest = min(candidates, key=lambda f: haversine(f.lat, f.lng, feature.lat, feature.lng), default=None)
             if not nearest or haversine(nearest.lat, nearest.lng, feature.lat, feature.lng) > MERGE_SEARCH_M:
-                self.message_user(request, f'No other feature within {MERGE_SEARCH_M} m of {feature.name}.',
+                self.message_user(request, f'No other feature within {round(MERGE_SEARCH_M * FT_PER_M)} ft of {feature.name}.',
                                   messages.WARNING)
                 continue
             merge_feature(feature, nearest)

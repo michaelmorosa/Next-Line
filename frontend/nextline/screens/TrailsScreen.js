@@ -4,7 +4,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { fetchJson } from '../api';
 import { useAuth } from '../AuthContext';
 import { ErrorState, Header, Loading, ProgressBar } from '../components/ui';
-import { directionLabel, duration, km } from '../utils/format';
+import { directionLabel, duration, miles } from '../utils/format';
 import { DIFFICULTY, colors, ui } from '../theme';
 
 export default function TrailsScreen() {
@@ -55,7 +55,7 @@ export default function TrailsScreen() {
           <TouchableOpacity style={ui.card} onPress={() => navigation.navigate('Trail', { id: t.id })}>
             <View style={ui.between}>
               <Text style={[ui.label, { color: difficulty.color }]}>
-                {directionLabel(t.direction)} · {difficulty.label} · {km(t.length_m)} km
+                {directionLabel(t.direction)} · {difficulty.label} · {miles(t.length_m)} mi
               </Text>
               <Text style={ui.small}>best {duration(t.best_s)}</Text>
             </View>

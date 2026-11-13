@@ -6,7 +6,7 @@ import { fetchJson, sendJson } from '../api';
 import { useAuth } from '../AuthContext';
 import { Button, Chip, CircleButton, ErrorState, Header, Loading, ProgressBar } from '../components/ui';
 import { progressLine } from '../utils/features';
-import { climbRate, directionLabel, duration, feetDown, km, metres, shortDate } from '../utils/format';
+import { climbRate, directionLabel, duration, feet, feetDown, miles, shortDate } from '../utils/format';
 import { DIFFICULTY, colors, ui } from '../theme';
 
 function EditTrail({ trail, onClose, onSaved }) {
@@ -73,7 +73,7 @@ export default function TrailScreen() {
   return (
     <ScrollView style={ui.screen} contentContainerStyle={ui.scroll}>
       <Header
-        caption={`${directionLabel(trail.direction)} · ${difficulty.label} · ${km(trail.length_m)} km`}
+        caption={`${directionLabel(trail.direction)} · ${difficulty.label} · ${miles(trail.length_m)} mi`}
         right={trail.is_mine ? <CircleButton icon="create-outline" label="Edit trail" onPress={() => setEditing(true)} /> : null}
       />
       <View>
@@ -81,7 +81,7 @@ export default function TrailScreen() {
         <Text style={ui.subtitle}>
           {trail.laps} full lap{trail.laps === 1 ? '' : 's'} · {trail.clean_laps} clean
           {trail.best_s ? ` · best ${duration(trail.best_s)}` : ''}
-          {` · ${metres(trail.drop_m)} m ${trail.direction === 'climb' ? 'gain' : 'drop'}`}
+          {` · ${feet(trail.drop_m)} ft ${trail.direction === 'climb' ? 'gain' : 'drop'}`}
           {trail.is_mine ? ' · your trail, only you see it' : ' · shared trail'}
           {trail.is_auto && trail.name.startsWith('Unnamed') ? ' · tap ✎ to name it' : ''}
         </Text>

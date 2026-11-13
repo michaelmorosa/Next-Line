@@ -111,9 +111,10 @@ ACHIEVEMENTS = [
     ('first_pr', 'Personal best', 'Beat your best time on a descent.', lambda s: s['descent_prs'] >= 1),
     ('clean_climb', 'No dab', 'Ride a whole climb without putting a foot down.', lambda s: s['clean_climbs'] >= 1),
     ('climb_pr', 'Stronger', 'Beat your best time on a climb.', lambda s: s['climb_prs'] >= 1),
-    ('nonstop_300', 'Engine', 'Climb 300 m without stopping to rest.', lambda s: s['nonstop'] >= 300),
-    ('thousand_up', 'Thousand-metre day', 'Climb 1,000 m in one ride.', lambda s: s['climb_day'] >= 1000),
-    ('vert_10k', '10K down', 'Descend 10,000 m in total.', lambda s: s['descent'] >= 10000),
+    # Stats are in metres; the goals are round numbers of feet (keys predate that).
+    ('nonstop_300', 'Engine', 'Climb 1,000 ft without stopping to rest.', lambda s: s['nonstop'] >= 304.8),
+    ('thousand_up', '3,000-foot day', 'Climb 3,000 ft in one ride.', lambda s: s['climb_day'] >= 914.4),
+    ('vert_10k', '30K down', 'Descend 30,000 ft in total.', lambda s: s['descent'] >= 9144),
     ('laps_10', 'Groundhog day', 'Ride 10 full laps of one trail.', lambda s: s['most_laps'] >= 10),
     ('streak_4', 'Habit', 'Ride 4 weeks in a row.', lambda s: s['streak'] >= 4),
 ]

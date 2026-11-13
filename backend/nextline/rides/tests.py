@@ -436,7 +436,7 @@ class ProgressTests(TestCase):
         # 150 m down (1 XP), one jump (1), biggest air (10), first clean climb (15), the ride itself (2).
         res = upload(self.client, jumps=[{'t': 700, 'airtime_s': 0.4}])
         items = {i['label']: i['amount'] for i in res.data['xp']['items']}
-        self.assertEqual(items, {'Ride': 2, 'Metres descended': 1, 'Jumps': 1, 'Biggest air': 10, 'Clean climb': 15})
+        self.assertEqual(items, {'Ride': 2, 'Descent': 1, 'Jumps': 1, 'Biggest air': 10, 'Clean climb': 15})
         self.assertEqual(res.data['xp']['xp'], 29)
         self.assertEqual(res.data['xp']['level']['total'], 29)
 

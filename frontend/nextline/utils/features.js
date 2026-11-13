@@ -1,3 +1,5 @@
+import { shortFeet } from './format.js';
+
 // Feature helpers with no React Native imports, so `npm test` can run them in Node.
 
 // The three one-tap outcomes, in the order they're shown. Walking it is a normal, judgment-free choice.
@@ -39,12 +41,12 @@ export function points(amount) {
 }
 
 const MEASUREMENTS = [
-  ['drop_height_m', 'Drop', (v) => `${v} m`],
-  ['gap_length_m', 'Gap', (v) => `${v} m`],
+  ['drop_height_m', 'Drop', shortFeet],
+  ['gap_length_m', 'Gap', shortFeet],
   ['steepness_deg', 'Steepness', (v) => `${v}°`],
 ];
 
-// [{ label: 'Drop', value: '0.9 m' }] for the measurements a feature has.
+// [{ label: 'Drop', value: '3 ft' }] for the measurements a feature has.
 export function measurementList(measurements = {}) {
   return MEASUREMENTS.filter(([key]) => measurements[key] != null)
     .map(([key, label, format]) => ({ label, value: format(measurements[key]) }));

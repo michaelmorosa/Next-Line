@@ -7,7 +7,7 @@ import * as recorder from '../recording/recorder';
 import useRecorder from '../recording/useRecorder';
 import { uploadRide } from '../recording/uploads';
 import { Button, Grid, StatTile } from '../components/ui';
-import { duration, km } from '../utils/format';
+import { duration, miles, mph, shortFeet } from '../utils/format';
 import { colors, fonts, ui } from '../theme';
 
 function gpsLabel(rec) {
@@ -44,10 +44,10 @@ function movingSeconds(rec) {
 function Diagnostics({ rec }) {
   if (!__DEV__) return null;
   const age = rec.lastFixAt ? `${Math.round((Date.now() - rec.lastFixAt) / 1000)}s ago` : 'none yet';
-  const accuracy = rec.gpsAccuracy == null ? '?' : Math.round(rec.gpsAccuracy);
+  const accuracy = rec.gpsAccuracy == null ? '?' : shortFeet(rec.gpsAccuracy);
   return (
     <Text style={[ui.small, { fontSize: 11, textAlign: 'center' }]}>
-      {`dev · ${rec.points.length} GPS points · last fix ${age} · ±${accuracy} m · ${rec.speed.toFixed(1)} m/s`
+      {`dev · ${rec.points.length} GPS points · last fix ${age} · ±${accuracy} ·${mph(rec.speed)} mph`
         + ` · ${rec.background ? 'background' : 'foreground'} GPS${recorder.IN_EXPO_GO ? ' · Expo Go' : ''}`}
     </Text>
   );
@@ -147,7 +147,7 @@ export default function RecordScreen() {
       <View style={[ui.screen, styles.pad, { justifyContent: 'center', gap: 14 }]}>
         <Text style={ui.title}>Ride interrupted</Text>
         <Text style={ui.subtitle}>
-          The app closed while recording. {km(rec.distanceM)} km and {rec.jumps.length} jumps were saved.
+          The app closed while recording. {miles(rec.distanceM)} mi and {rec.jumps.length} jumps were saved.
         </Text>
         <Button title="Keep recording" onPress={() => recorder.resumeInterrupted().catch((e) => Alert.alert('Can\'t record', e.message))} />
         <Button title="Finish and save" variant="secondary" onPress={finish} loading={busy} />
@@ -183,7 +183,7 @@ export default function RecordScreen() {
       {active && <Diagnostics rec={rec} />}
 
       <Grid>
-        <StatTile value={km(rec.distanceM)} sub="km" center small />
+        <StatTile value={miles(rec.distanceM)} sub="mi" center small />
         <StatTile value={rec.jumps.length} sub="jumps" center small />
         <StatTile value={Math.round(rec.climbM)} sub="m up" center small />
         <StatTile value={Math.round(rec.descentM)} sub="m down" center small />

@@ -126,7 +126,7 @@ def features(request):
     if trail is None:
         raise ValidationError({'trail': "No trail within reach of this spot. Pick the trail, or move closer to it."})
     if certification.nearest_vertex(trail, data['lat'], data['lng'])[1] > certification.NEAREST_TRAIL_M:
-        raise ValidationError({'lat': f"That spot is more than {certification.NEAREST_TRAIL_M} m from {trail.name}."})
+        raise ValidationError({'lat': f"That spot is more than {round(certification.NEAREST_TRAIL_M * 3.28084)} ft from {trail.name}."})
     try:
         with transaction.atomic():
             feature = Feature(**{**data, 'trail': trail}, created_by=request.user)

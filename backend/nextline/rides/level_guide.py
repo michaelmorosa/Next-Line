@@ -98,7 +98,7 @@ def level_rules():
             {'key': Reason.AIR, 'label': 'Biggest air', 'how': f"{v['biggest_air']} points each new best.",
              'value': v['biggest_air']},
             {'key': Reason.DESCENT, 'label': 'Descending',
-             'how': f"{v['descent_per_100m']} points per 100 m, up to {caps['descent_xp_per_day']} a day.",
+             'how': f"{v['descent_per_100m']} points per 330 ft (100 m), up to {caps['descent_xp_per_day']} a day.",
              'value': v['descent_per_100m']},
             {'key': Reason.JUMPS, 'label': 'Jumps',
              'how': f"{v['jump']} points per jump, up to {caps['jump_xp_per_day']} a day.", 'value': v['jump']},
